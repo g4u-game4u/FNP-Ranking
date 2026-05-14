@@ -57,7 +57,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', async () => {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
-      // console.log('SW registered: ', registration);
+      console.log('SW registered: ', registration);
       
       // Listen for updates
       registration.addEventListener('updatefound', () => {
@@ -65,14 +65,28 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New content is available, notify user
-              // console.log('New content available, please refresh');
+              // New content is available, reload immediately for kiosk mode
+              console.log('New content available, reloading...');
+              window.location.reload();
             }
           });
         }
       });
+      
+      // Listen for messages from service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'CACHE_UPDATED') {
+          console.log('Cache updated, reloading...');
+          window.location.reload();
+        }
+      });
+      
+      // Check for updates every 5 minutes in kiosk mode
+      setInterval(() => {
+        registration.update();
+      }, 5 * 60 * 1000);
     } catch (error) {
-      // console.log('SW registration failed: ', error);
+      console.log('SW registration failed: ', error);
     }
   });
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChallengeProgress } from '../hooks/useChallengeProgress';
 import type { FunifierApiService } from '../services/funifierApi';
 
@@ -19,6 +19,13 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
   target: fallbackTarget = 50000,
   className = '',
 }) => {
+  const [topPlayerProgress, setTopPlayerProgress] = useState<{
+    playerId: string;
+    progress: number;
+    current: number;
+    target: number;
+  } | null>(null);
+
   // Use dynamic data if API service is available, otherwise fall back to props
   const challengeData = useChallengeProgress({
     apiService: apiService || null,
@@ -27,10 +34,67 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
     enabled: !!apiService,
   });
 
-  // Determine values to use (dynamic or fallback)
-  const current = apiService ? challengeData.current : fallbackCurrent;
-  const target = apiService ? challengeData.target : fallbackTarget;
-  const progressPercentage = apiService ? challengeData.progress : Math.min((fallbackCurrent / fallbackTarget) * 100, 100);
+  // Fetch all players' progress to find the one with highest percentage
+  useEffect(() => {
+    const fetchTopPlayerProgress = async () => {
+      if (!apiService) return;
+
+      try {
+        // Get all players from the leaderboard
+        const leaderboards = await apiService.getLeaderboards();
+        if (!leaderboards || leaderboards.length === 0) return;
+
+        // Get the first leaderboard's players
+        const firstLeaderboard = leaderboards[0];
+        const players = await apiService.getLeaderboardPlayers(firstLeaderboard.id);
+
+        // Fetch challenge progress for each player and find the highest
+        let maxProgress = 0;
+        let topPlayer = null;
+
+        for (const player of players.slice(0, 10)) { // Check top 10 players only for performance
+          try {
+            const playerStatus = await apiService.getPlayerStatus(player.id);
+            const challengeProgress = playerStatus.challenge_progress?.find(
+              (cp: any) => cp.challenge === challengeId
+            );
+
+            if (challengeProgress && challengeProgress.percent_completed > maxProgress) {
+              maxProgress = challengeProgress.percent_completed;
+              const rule = challengeProgress.rules[0];
+              topPlayer = {
+                playerId: player.id,
+                progress: challengeProgress.percent_completed,
+                current: rule?.times_completed || 0,
+                target: rule?.times_required || 0,
+              };
+            }
+          } catch (error) {
+            // Skip players that fail
+            continue;
+          }
+        }
+
+        if (topPlayer) {
+          setTopPlayerProgress(topPlayer);
+        }
+      } catch (error) {
+        console.error('Failed to fetch top player progress:', error);
+      }
+    };
+
+    if (apiService) {
+      fetchTopPlayerProgress();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchTopPlayerProgress, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [apiService, challengeId]);
+
+  // Determine values to use (top player or fallback)
+  const current = topPlayerProgress?.current ?? (apiService ? challengeData.current : fallbackCurrent);
+  const target = topPlayerProgress?.target ?? (apiService ? challengeData.target : fallbackTarget);
+  const progressPercentage = topPlayerProgress?.progress ?? (apiService ? challengeData.progress : Math.min((fallbackCurrent / fallbackTarget) * 100, 100));
   const challengeName = apiService ? challengeData.challengeName : 'Meta Diária';
   const isLoading = apiService ? challengeData.loading : false;
   const hasError = apiService ? !!challengeData.error : false;
@@ -62,6 +126,9 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
           🎯 {challengeName}
+          {topPlayerProgress && (
+            <span className="text-xs text-gray-500">(Líder)</span>
+          )}
           {isLoading && <span className="text-xs text-gray-500 animate-pulse">Atualizando...</span>}
           {hasError && <span className="text-xs text-red-500">⚠️</span>}
         </h3>
@@ -86,21 +153,14 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
       {/* Progress Details */}
       <div className="flex items-center justify-between text-sm sm:text-base">
         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-          {progressPercentage >= 100 ? (
-            // When completed, show blank instead of current/target
-            <div className="text-gray-600">
-              <span className="font-medium text-green-600">Meta concluída!</span>
+          <div className="text-gray-600">
+            <span className="font-medium text-gray-800">{formatNumber(current)}</span>
+            <span className="text-gray-500"> / {formatNumber(target)}</span>
+          </div>
+          {progressPercentage < 100 && (
+            <div className="text-gray-500 text-xs sm:text-sm">
+              Restam: <span className="font-medium text-gray-700">{formatNumber(target - current)}</span>
             </div>
-          ) : (
-            <>
-              <div className="text-gray-600">
-                <span className="font-medium text-gray-800">{formatNumber(current)}</span>
-                <span className="text-gray-500"> / {formatNumber(target)}</span>
-              </div>
-              <div className="text-gray-500 text-xs sm:text-sm">
-                Restam: <span className="font-medium text-gray-700">{formatNumber(target - current)}</span>
-              </div>
-            </>
           )}
         </div>
         
@@ -147,7 +207,7 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
         </p>
         {apiService && !hasError && (
           <p className="text-xs text-gray-400 text-center mt-1">
-            Dados atualizados automaticamente
+            {topPlayerProgress ? 'Mostrando progresso do líder' : 'Dados atualizados automaticamente'}
           </p>
         )}
       </div>

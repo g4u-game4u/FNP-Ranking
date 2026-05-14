@@ -1,7 +1,9 @@
 // Service Worker for Chicken Race Ranking PWA
-const CACHE_NAME = 'chicken-race-v1.0.0';
-const STATIC_CACHE_NAME = 'chicken-race-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'chicken-race-dynamic-v1.0.0';
+// Use timestamp-based versioning to force cache updates on every deployment
+const CACHE_VERSION = Date.now();
+const CACHE_NAME = `chicken-race-v${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = `chicken-race-static-v${CACHE_VERSION}`;
+const DYNAMIC_CACHE_NAME = `chicken-race-dynamic-v${CACHE_VERSION}`;
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
@@ -18,9 +20,9 @@ const API_ENDPOINTS = [
   // Funifier API endpoints will be configured at runtime
 ];
 
-// Install event - cache static assets
+// Install event - cache static assets and skip waiting immediately
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
+  console.log('Service Worker: Installing new version...');
 
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME)
@@ -29,22 +31,26 @@ self.addEventListener('install', (event) => {
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        console.log('Service Worker: Static assets cached');
+        console.log('Service Worker: Static assets cached, activating immediately');
+        // Skip waiting to activate immediately and replace old service worker
         return self.skipWaiting();
       })
       .catch((error) => {
         console.error('Service Worker: Error caching static assets', error);
+        // Still skip waiting even if caching fails
+        return self.skipWaiting();
       })
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and force immediate activation
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: Activating...');
 
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
+        // Delete ALL old caches to ensure fresh content
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== STATIC_CACHE_NAME &&
@@ -57,8 +63,20 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => {
-        console.log('Service Worker: Activated');
+        console.log('Service Worker: Activated and claiming clients');
+        // Force immediate control of all clients
         return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients to reload for fresh content
+        return self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'CACHE_UPDATED',
+              message: 'New version available, reloading...'
+            });
+          });
+        });
       })
   );
 });
