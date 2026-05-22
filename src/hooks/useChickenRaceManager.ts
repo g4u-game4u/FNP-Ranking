@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
-import { FunifierApiService } from '../services/funifierApi';
+import { SupabaseApiService } from '../services/supabaseApi';
 // import { useRealTimeUpdatesWithLoading } from './useRealTimeUpdates'; // Temporarily disabled
 // import { usePositionTransitions } from './usePositionTransitions'; // Disabled to use custom positioning
 import { useLeaderboardData } from './useAppState';
@@ -178,7 +178,8 @@ export const useChickenRaceManager = (config: ChickenRaceManagerConfig = {}) => 
       return null;
     }
     try {
-      return new FunifierApiService(apiConfig);
+      // Use Supabase service directly
+      return new SupabaseApiService(apiConfig.serverUrl, apiConfig.apiKey);
     } catch (error) {
       console.error('Failed to create API service:', error);
       // Trigger auth error callback if provided

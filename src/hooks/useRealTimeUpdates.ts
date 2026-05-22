@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { FunifierApiService } from '../services/funifierApi';
+import { SupabaseApiService } from '../services/supabaseApi';
 import { useLeaderboardData } from './useAppState';
 import type { ApiError, Player } from '../types';
 
@@ -24,7 +24,7 @@ interface RealTimeConfig {
  * error handling, and retry logic with exponential backoff.
  */
 export const useRealTimeUpdates = (
-  apiService: FunifierApiService,
+  apiService: SupabaseApiService,
   config: RealTimeConfig = {}
 ) => {
   const {

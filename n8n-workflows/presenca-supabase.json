@@ -1,0 +1,153 @@
+{
+  "name": "Presença → Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "presenca-webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "webhook-presenca",
+      "name": "Webhook Presença",
+      "webhookId": "presenca-webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "uid",
+              "name": "uid",
+              "value": "={{ $json.body.uid }}",
+              "type": "string"
+            },
+            {
+              "id": "station",
+              "name": "station",
+              "value": "={{ $json.body.station }}",
+              "type": "string"
+            },
+            {
+              "id": "ts",
+              "name": "ts",
+              "value": "={{ $json.body.ts }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 0],
+      "id": "extract-fields",
+      "name": "Extract Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-domain.vercel.app/api/presenca-webhook",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"uid\": \"{{ $json.uid }}\",\n  \"station\": \"{{ $json.station }}\",\n  \"ts\": {{ $json.ts }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 0],
+      "id": "call-supabase-api",
+      "name": "Call Supabase API"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [600, 0],
+      "id": "check-success",
+      "name": "Check Success"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-message",
+              "name": "message",
+              "value": "=Presença registrada: {{ $json.player_name }} - {{ $json.points_awarded }} pontos",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, -100],
+      "id": "success-log",
+      "name": "Success Log"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-message",
+              "name": "error",
+              "value": "=Erro ao registrar presença: {{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, 100],
+      "id": "error-log",
+      "name": "Error Log"
+    }
+  ],
+  "connections": {
+    "Webhook Presença": {
+      "main": [[{"node": "Extract Fields", "type": "main", "index": 0}]]
+    },
+    "Extract Fields": {
+      "main": [[{"node": "Call Supabase API", "type": "main", "index": 0}]]
+    },
+    "Call Supabase API": {
+      "main": [[{"node": "Check Success", "type": "main", "index": 0}]]
+    },
+    "Check Success": {
+      "main": [
+        [{"node": "Success Log", "type": "main", "index": 0}],
+        [{"node": "Error Log", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

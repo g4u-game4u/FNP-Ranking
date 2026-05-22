@@ -1,7 +1,8 @@
 // Services barrel export file
 // Export all services from this file for easier imports
 
-export { FunifierApiService } from './funifierApi';
+// Supabase is now the primary API service
+export { SupabaseApiService } from './supabaseApi';
 export { GoogleSheetsService } from './googleSheetsService';
 export { ApiCacheService } from './apiCacheService';
 export { NetworkReconnectionService } from './networkReconnectionService';

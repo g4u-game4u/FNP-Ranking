@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FunifierApiService } from '../services/funifierApi';
+import { SupabaseApiService } from '../services/supabaseApi';
 import type { PlayerStatus, ChallengeProgress, ApiError } from '../types';
 
 interface ChallengeProgressState {
@@ -13,7 +13,7 @@ interface ChallengeProgressState {
 }
 
 interface UseChallengeProgressOptions {
-  apiService: FunifierApiService | null;
+  apiService: SupabaseApiService | null;
   playerId: string;
   challengeId: string;
   refreshInterval?: number;
