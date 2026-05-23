@@ -623,7 +623,7 @@ export default async function handler(
     });
 
     // Handle connection errors
-    res.on('error', (error) => {
+    res.on('error', (error: any) => {
       logSSEError(createSSEError(
         'connection',
         'CONNECTION_ERROR',
