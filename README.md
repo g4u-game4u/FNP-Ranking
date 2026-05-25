@@ -46,26 +46,11 @@ A gamified leaderboard visualization system that transforms traditional ranking 
    npm run dev
    ```
 
-## Deployment
+## Deployment & Raspberry Pi Kiosk
 
-This project is configured for deployment on Vercel with automatic CI/CD.
+This project is deployed on Vercel and optimized for Raspberry Pi 4 kiosk mode on TV displays.
 
-### Quick Deploy to Vercel
-
-1. **Verify deployment setup**:
-   ```bash
-   npm run verify:deployment
-   ```
-
-2. **Push to GitHub** and connect to Vercel
-
-3. **Set environment variables** in Vercel dashboard:
-   - `VITE_FUNIFIER_API_KEY`
-   - `VITE_FUNIFIER_AUTH_TOKEN`
-
-4. **Deploy automatically** via GitHub integration
-
-For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md) and [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md).
+For the complete guide covering Vercel deployment, Raspberry Pi setup, TV scaling, performance tuning, known issues, and troubleshooting, see **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)**.
 
 ## Available Scripts
 
