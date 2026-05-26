@@ -1,0 +1,238 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-880, 0],
+      "id": "793bc276-de43-4436-b5d3-b8752083434e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4b4d6669-9100-4f63-b170-34f890563477",
+              "name": "horaAnterior",
+              "value": "={{ $now.setZone(\"America/Sao_Paulo\").minus({ hours: 1 }).toFormat(\"yyyy-MM-dd HH:00:00\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-592, 0],
+      "id": "cb02913e-7a9c-4553-af37-6ab0325db201",
+      "name": "Calculate Last Hour"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  delivery_title,\n  price\nFROM\n  g4u_actions_v\nWHERE\n  created_at > \"{{ $json.horaAnterior }}\"\nORDER BY\n  created_at DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [-320, 0],
+      "id": "26c73144-69f9-4d69-841c-89728f18c29c",
+      "name": "Fetch New Sales from GCOM",
+      "credentials": {
+        "mySql": {
+          "id": "eLovY2x6l0lcVsKF",
+          "name": "MySQL account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9861ba94-8494-4ede-a29f-43a66423e9e4",
+      "name": "Split Sales",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [-80, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VERCEL_API_URL }}/api/gcom-sale-webhook",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \n  delivery_title: $json.delivery_title, \n  price: $json.price\n}) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "28b8feac-0fc5-4a01-84e9-91d91df94459",
+      "name": "Call Vercel Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [160, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "77912130-1add-45e2-b56b-f17f05f41876",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [400, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log success\nconst deliveryTitle = $input.first().json.delivery_title;\nconst playersAwarded = $input.first().json.players_awarded || 0;\nconst totalPoints = $input.first().json.total_points_awarded || 0;\n\nconsole.log(`✅ Sale \"${deliveryTitle}\" processed. Players: ${playersAwarded}, Total Points: ${totalPoints}`);\n\nreturn $input.all();"
+      },
+      "id": "5d1f9399-dfc9-49dc-9efc-40620ae11301",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, -80]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log error\nconst deliveryTitle = $input.first().json.delivery_title || 'unknown';\nconst error = $input.first().json.error || 'Unknown error';\n\nconsole.error(`❌ Sale \"${deliveryTitle}\" failed: ${error}`);\n\nreturn $input.all();"
+      },
+      "id": "291c1d37-c041-47e5-9c3e-557f794d07ca",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 80]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Last Hour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Last Hour": {
+      "main": [
+        [
+          {
+            "node": "Fetch New Sales from GCOM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch New Sales from GCOM": {
+      "main": [
+        [
+          {
+            "node": "Split Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Sales": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Call Vercel Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Vercel Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Success": {
+      "main": [
+        [
+          {
+            "node": "Split Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Split Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "def6bcd7e4a98c3f75c973da3f8fba94d59a9cdc1c3089f1ef35e310bd9c4f4e"
+  }
+}

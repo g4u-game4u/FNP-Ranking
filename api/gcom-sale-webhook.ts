@@ -3,11 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 
 /**
  * GCOM Sale Webhook
- * Receives sale data from GCOM via N8N
+ * Receives store-wide sale data from GCOM via N8N
+ * Awards points to ALL players who had presence today
  * 
  * Expected payload:
  * {
- *   "_id": "player@email.com",
  *   "delivery_title": "Product Name",
  *   "price": 100.50
  * }
@@ -39,13 +39,13 @@ export default async function handler(
   }
 
   try {
-    const { _id, delivery_title, price } = req.body;
+    const { delivery_title, price } = req.body;
 
     // Validate required fields
-    if (!_id || !delivery_title || price === undefined) {
+    if (!delivery_title || price === undefined) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: _id, delivery_title, price'
+        error: 'Missing required fields: delivery_title, price'
       });
     }
 
@@ -61,34 +61,28 @@ export default async function handler(
     // Create Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Call the log_sale function
-    const { data, error } = await supabase.rpc('log_sale', {
-      p_player_email: _id,
+    // Call the log_store_sale function (awards to ALL players with presence)
+    const { data, error } = await supabase.rpc('log_store_sale', {
       p_delivery_title: delivery_title,
       p_price: priceNum,
       p_sale_timestamp: new Date().toISOString()
     });
 
     if (error) {
-      console.error('Error logging sale:', error);
+      console.error('Error logging store sale:', error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to log sale',
+        error: 'Failed to log store sale',
         details: error.message
       });
     }
 
-    // Check if player was found
-    if (!data.success) {
-      return res.status(404).json(data);
-    }
-
-    console.log('Sale logged successfully:', {
-      player_id: data.player_id,
-      player_name: data.player_name,
-      points_awarded: data.points_awarded,
-      has_presence: data.has_presence,
-      price: priceNum
+    console.log('Store sale logged successfully:', {
+      delivery_title,
+      price: priceNum,
+      players_awarded: data.players_awarded,
+      total_points_awarded: data.total_points_awarded,
+      points_per_player: data.points_per_player
     });
 
     return res.status(200).json(data);
