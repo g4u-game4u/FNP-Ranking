@@ -18,7 +18,7 @@ import { ResponsiveWrapper } from './components/ResponsiveWrapper';
 import { KioskModeProvider } from './components/KioskModeProvider';
 import { initializeSecurity } from './utils/securityInit';
 // import ChickenRaceExample from './components/examples/ChickenRaceExample';
-import type { FunifierConfig } from './types';
+import type { SupabaseConfig } from './types';
 
 function App() {
   const [showDemo, setShowDemo] = useState(false);
@@ -62,20 +62,18 @@ function App() {
   }, []);
   
   // Get API config from environment, allowing null for demo mode fallback
-  const [apiConfig] = useState<FunifierConfig | null>(() => {
-    const serverUrl = import.meta.env.VITE_FUNIFIER_SERVER_URL;
-    const apiKey = import.meta.env.VITE_FUNIFIER_API_KEY;
-    const authToken = import.meta.env.VITE_FUNIFIER_AUTH_TOKEN;
+  const [apiConfig] = useState<SupabaseConfig | null>(() => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!serverUrl || !apiKey || !authToken) {
-      console.warn('🔧 Missing API configuration, will use demo mode');
+    if (!url || !anonKey) {
+      console.warn('🔧 Missing Supabase configuration, will use demo mode');
       return null;
     }
 
     return {
-      serverUrl: serverUrl.replace(/\/$/, ''),
-      apiKey,
-      authToken,
+      url,
+      anonKey,
     };
   });
 
