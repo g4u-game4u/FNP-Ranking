@@ -1,11 +1,11 @@
 import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
-import { FunifierApiService } from '../services/funifierApi';
+import { SupabaseApiService } from '../services/supabaseApi';
 // import { useRealTimeUpdatesWithLoading } from './useRealTimeUpdates'; // Temporarily disabled
 // import { usePositionTransitions } from './usePositionTransitions'; // Disabled to use custom positioning
 import { useLeaderboardData } from './useAppState';
 import { useLeaderboardStore } from '../store/leaderboardStore';
 import { appStoreActions } from '../store/appStore';
-import type { FunifierConfig } from '../types';
+import type { SupabaseConfig } from '../types';
 
 // Mock data for fallback - defined outside component to prevent re-creation
 const MOCK_LEADERBOARD_DATA = [
@@ -75,8 +75,8 @@ const MOCK_LEADERBOARD_DATA = [
  * Configuration for the chicken race manager
  */
 interface ChickenRaceManagerConfig {
-  /** Funifier API configuration */
-  apiConfig?: FunifierConfig;
+  /** Supabase API configuration */
+  apiConfig?: SupabaseConfig;
   /** Real-time update configuration */
   realTimeConfig?: {
     pollingInterval?: number;
@@ -178,7 +178,8 @@ export const useChickenRaceManager = (config: ChickenRaceManagerConfig = {}) => 
       return null;
     }
     try {
-      return new FunifierApiService(apiConfig);
+      // Use Supabase service with correct config
+      return new SupabaseApiService(apiConfig);
     } catch (error) {
       console.error('Failed to create API service:', error);
       // Trigger auth error callback if provided

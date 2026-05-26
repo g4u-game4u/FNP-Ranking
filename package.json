@@ -27,7 +27,12 @@
     "deploy:preview": "vercel --prod=false",
     "deploy:production": "vercel --prod",
     "verify:deployment": "node scripts/verify-deployment.js",
-    "postbuild": "echo 'Build completed successfully. Ready for deployment.'"
+    "postbuild": "echo 'Build completed successfully. Ready for deployment.'",
+    "migrate:export": "tsx scripts/export-funifier-data.ts",
+    "migrate:export:full": "tsx scripts/export-funifier-data.ts --with-player-details --with-player-statuses",
+    "migrate:import": "tsx scripts/import-to-supabase.ts",
+    "migrate:schema": "echo 'Please run the supabase-schema.sql file in your Supabase SQL editor'",
+    "setup:supabase": "node scripts/setup-supabase-env.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
@@ -40,6 +45,7 @@
     "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
+    "@vercel/node": "^5.8.4",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
@@ -57,12 +63,14 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.22.3",
     "typescript": "~5.8.3",
     "vite": "^7.1.6",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.106.1",
     "@upstash/redis": "^1.36.1",
     "@vercel/kv": "^3.0.0",
     "axios": "^1.12.2",

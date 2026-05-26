@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useChallengeProgress } from '../hooks/useChallengeProgress';
-import type { FunifierApiService } from '../services/funifierApi';
+import type { SupabaseApiService } from '../services/supabaseApi';
 
 interface DailyGoalProgressProps {
-  apiService?: FunifierApiService | null;
+  apiService?: SupabaseApiService | null;
   playerId?: string;
   challengeId?: string;
   current?: number;

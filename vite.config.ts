@@ -274,10 +274,9 @@ export default defineConfig(({ mode }) => {
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     // Security: Only define environment variables that are safe for client-side exposure
-    // Server-side only variables (GOOGLE_SHEETS_API_KEY, etc.) are intentionally excluded
-    'import.meta.env.VITE_FUNIFIER_SERVER_URL': JSON.stringify(env.VITE_FUNIFIER_SERVER_URL),
-    'import.meta.env.VITE_FUNIFIER_API_KEY': JSON.stringify(env.VITE_FUNIFIER_API_KEY),
-    'import.meta.env.VITE_FUNIFIER_AUTH_TOKEN': JSON.stringify(env.VITE_FUNIFIER_AUTH_TOKEN),
+    // Server-side only variables (SUPABASE_SERVICE_ROLE_KEY, GOOGLE_SHEETS_API_KEY, etc.) are intentionally excluded
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
   },
   // Development server optimizations
   server: {

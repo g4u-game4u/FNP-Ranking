@@ -406,7 +406,7 @@ export default async function handler(
     }
 
     // Parse and validate payload
-    let event: ChallengeCompletionEvent;
+    let event: ChallengeCompletionEvent | null;
     try {
       event = parseWebhookPayload(req.body);
       if (!event) {

@@ -8,6 +8,12 @@ export interface FunifierConfig {
   authToken: string; // Basic auth token from environment variables
 }
 
+// Supabase API Configuration
+export interface SupabaseConfig {
+  url: string; // Supabase project URL
+  anonKey: string; // Supabase anon/public key
+}
+
 // Google Sheets API Configuration
 export interface GoogleSheetsConfig {
   clientId: string; // OAuth 2.0 Client ID
