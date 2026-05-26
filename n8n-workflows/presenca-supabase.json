@@ -1,153 +1,128 @@
 {
-  "name": "Presença → Supabase",
+  "name": "Presença Webhook → Supabase",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "presenca-webhook",
+        "responseMode": "responseNode",
         "options": {}
       },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [0, 0],
-      "id": "webhook-presenca",
-      "name": "Webhook Presença",
+      "typeVersion": 1,
+      "position": [250, 300],
       "webhookId": "presenca-webhook"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "uid",
-              "name": "uid",
-              "value": "={{ $json.body.uid }}",
-              "type": "string"
-            },
-            {
-              "id": "station",
-              "name": "station",
-              "value": "={{ $json.body.station }}",
-              "type": "string"
-            },
-            {
-              "id": "ts",
-              "name": "ts",
-              "value": "={{ $json.body.ts }}",
-              "type": "number"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [200, 0],
-      "id": "extract-fields",
-      "name": "Extract Fields"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://your-domain.vercel.app/api/presenca-webhook",
+        "url": "={{ $env.VERCEL_API_URL }}/api/presenca-webhook",
+        "authentication": "none",
+        "requestMethod": "POST",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"uid\": \"{{ $json.uid }}\",\n  \"station\": \"{{ $json.station }}\",\n  \"ts\": {{ $json.ts }}\n}",
-        "options": {}
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 10000
+        }
       },
+      "id": "call-vercel-api",
+      "name": "Call Vercel API",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [400, 0],
-      "id": "call-supabase-api",
-      "name": "Call Supabase API"
+      "typeVersion": 4.1,
+      "position": [450, 300]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
+          "string": [
             {
-              "id": "success-check",
-              "leftValue": "={{ $json.success }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+              "value1": "={{ $json.success }}",
+              "operation": "equals",
+              "value2": "true"
             }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
+          ]
+        }
       },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [600, 0],
       "id": "check-success",
-      "name": "Check Success"
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "log-message",
-              "name": "message",
-              "value": "=Presença registrada: {{ $json.player_name }} - {{ $json.points_awarded }} pontos",
-              "type": "string"
-            }
-          ]
-        }
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: $json.message, points: $json.points_awarded }) }}"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [800, -100],
-      "id": "success-log",
-      "name": "Success Log"
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 200]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "error-message",
-              "name": "error",
-              "value": "=Erro ao registrar presença: {{ $json.error }}",
-              "type": "string"
-            }
-          ]
-        }
+        "respondWith": "json",
+        "responseCode": 500,
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.error || 'Unknown error' }) }}"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [800, 100],
-      "id": "error-log",
-      "name": "Error Log"
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 400]
     }
   ],
   "connections": {
-    "Webhook Presença": {
-      "main": [[{"node": "Extract Fields", "type": "main", "index": 0}]]
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Vercel API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Extract Fields": {
-      "main": [[{"node": "Call Supabase API", "type": "main", "index": 0}]]
-    },
-    "Call Supabase API": {
-      "main": [[{"node": "Check Success", "type": "main", "index": 0}]]
+    "Call Vercel API": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Check Success": {
       "main": [
-        [{"node": "Success Log", "type": "main", "index": 0}],
-        [{"node": "Error Log", "type": "main", "index": 0}]
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
-  "pinData": {},
-  "meta": {
-    "templateCredsSetupCompleted": true
-  }
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-20T00:00:00.000Z",
+  "versionId": "1"
 }

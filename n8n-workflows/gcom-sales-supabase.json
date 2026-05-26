@@ -1,76 +1,80 @@
 {
-  "name": "GCOM Sales → Supabase",
+  "name": "GCOM Sales → Supabase (Hourly)",
   "nodes": [
     {
       "parameters": {
         "rule": {
-          "interval": [{"field": "hours"}]
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
         }
       },
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [0, 0],
       "id": "schedule-trigger",
-      "name": "Every Hour"
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "hora-atual",
-              "name": "horaAtual",
-              "value": "={{ $now.setZone(\"America/Sao_Paulo\").toFormat(\"yyyy-MM-dd HH:00:00\") }}",
-              "type": "string"
-            },
-            {
-              "id": "hora-anterior",
-              "name": "horaAnterior",
-              "value": "={{ $now.setZone(\"America/Sao_Paulo\").minus({ hours: 1 }).toFormat(\"yyyy-MM-dd HH:00:00\") }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "const now = new Date();\nconst oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));\nconst horaAnterior = oneHourAgo.toISOString().slice(0, 19).replace('T', ' ');\n\nreturn { horaAnterior };"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [200, 0],
-      "id": "get-time-range",
-      "name": "Get Time Range"
+      "id": "calculate-time",
+      "name": "Calculate Time",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT \n  ID_ETB_GCOM,\n  ID_EMP_GCOM,\n  status,\n  delivery_id,\n  delivery_title,\n  created_at,\n  finished_at,\n  integration_id,\n  price,\n  comments,\n  action_id\nFROM\n  g4u_actions_v\nWHERE\n  created_at > \"{{ $json.horaAnterior }}\"\n  AND finished_at IS NOT NULL\nORDER BY\n  created_at DESC",
+        "query": "SELECT \n  _id,\n  delivery_title,\n  created_at,\n  finished_at,\n  price\nFROM\n  g4u_actions_v\nWHERE\n  created_at > \"{{ $json.horaAnterior }}\"\n  AND action_id = 'sell_product'\nORDER BY\n  created_at DESC",
         "options": {}
       },
       "type": "n8n-nodes-base.mySql",
       "typeVersion": 2.5,
-      "position": [400, 0],
-      "id": "query-gcom",
-      "name": "Query GCOM Sales",
+      "position": [650, 300],
+      "id": "fetch-new-sales",
+      "name": "Fetch New Sales from GCOM",
       "credentials": {
         "mySql": {
-          "id": "YOUR_MYSQL_CREDENTIAL_ID",
-          "name": "GCOM MySQL"
+          "id": "{{YOUR_MYSQL_CREDENTIAL_ID}}",
+          "name": "MySQL account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://your-domain.vercel.app/api/gcom-sale-webhook",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"_id\": \"{{ $json.ID_EMP_GCOM }}\",\n  \"delivery_title\": \"{{ $json.delivery_title }}\",\n  \"price\": {{ $json.price }}\n}",
+        "batchSize": 1,
         "options": {}
       },
+      "id": "split-sales",
+      "name": "Split Sales",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.VERCEL_API_URL }}/api/gcom-sale-webhook",
+        "authentication": "none",
+        "requestMethod": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \n  _id: $json._id, \n  delivery_title: $json.delivery_title, \n  price: $json.price, \n  created_at: $json.created_at,\n  finished_at: $json.finished_at\n}) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "call-vercel-api",
+      "name": "Call Vercel API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [600, 0],
-      "id": "call-supabase-api",
-      "name": "Call Supabase API"
+      "position": [1050, 300]
     },
     {
       "parameters": {
@@ -95,72 +99,138 @@
         },
         "options": {}
       },
+      "id": "check-success",
+      "name": "Check Success",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [800, 0],
-      "id": "check-success",
-      "name": "Check Success"
+      "position": [1250, 300]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "log-message",
-              "name": "message",
-              "value": "=Venda registrada: {{ $json.player_name }} - R$ {{ $json.price }} - {{ $json.points_awarded }} pontos (Presença: {{ $json.has_presence }})",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "// Log success\nconst saleId = $input.first().json._id;\nconst pointsAwarded = $input.first().json.points_awarded || 0;\n\nconsole.log(`✅ Sale ${saleId} processed successfully. Points awarded: ${pointsAwarded}`);\n\nreturn $input.all();"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [1000, -100],
-      "id": "success-log",
-      "name": "Success Log"
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "error-message",
-              "name": "error",
-              "value": "=Erro ao registrar venda: {{ $json.error }}",
-              "type": "string"
-            }
-          ]
-        }
+        "jsCode": "// Log error\nconst saleId = $input.first().json._id;\nconst error = $input.first().json.error || 'Unknown error';\n\nconsole.error(`❌ Sale ${saleId} failed: ${error}`);\n\nreturn $input.all();"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [1000, 100],
-      "id": "error-log",
-      "name": "Error Log"
+      "id": "log-error",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 400]
     }
   ],
   "connections": {
-    "Every Hour": {
-      "main": [[{"node": "Get Time Range", "type": "main", "index": 0}]]
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Get Time Range": {
-      "main": [[{"node": "Query GCOM Sales", "type": "main", "index": 0}]]
+    "Calculate Time": {
+      "main": [
+        [
+          {
+            "node": "Fetch New Sales from GCOM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Query GCOM Sales": {
-      "main": [[{"node": "Call Supabase API", "type": "main", "index": 0}]]
+    "Fetch New Sales from GCOM": {
+      "main": [
+        [
+          {
+            "node": "Split Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Call Supabase API": {
-      "main": [[{"node": "Check Success", "type": "main", "index": 0}]]
+    "Split Sales": {
+      "main": [
+        [
+          {
+            "node": "Call Vercel API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Vercel API": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Check Success": {
       "main": [
-        [{"node": "Success Log", "type": "main", "index": 0}],
-        [{"node": "Error Log", "type": "main", "index": 0}]
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Success": {
+      "main": [
+        [
+          {
+            "node": "Split Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Split Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
-  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-20T00:00:00.000Z",
+  "versionId": "1",
   "meta": {
     "templateCredsSetupCompleted": true
   }
