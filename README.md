@@ -5,19 +5,17 @@ A gamified leaderboard visualization system that transforms traditional ranking 
 ## Features
 
 - 🏁 Interactive chicken race visualization with animated chickens representing players
-- 📊 Real-time leaderboard data from Supabase
+- 📊 Real-time leaderboard data from Funifier API
 - 🔄 Auto-cycling between multiple leaderboards
 - 📱 Responsive design for desktop and mobile
 - 🎯 Hover tooltips with detailed player information
 - 📋 Traditional ranking sidebar and detailed table view
-- ⚡ Real-time updates via Supabase subscriptions
 
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS
 - **Animation**: Framer Motion
-- **Backend**: Supabase (PostgreSQL, Real-time, Auth)
-- **API Client**: Supabase JS Client
+- **API**: Axios for HTTP requests
 - **Build Tool**: Vite
 - **Deployment**: Vercel
 
@@ -41,40 +39,18 @@ A gamified leaderboard visualization system that transforms traditional ranking 
    cp .env.example .env.local
    ```
 
-4. Update `.env.local` with your Supabase credentials:
-   ```bash
-   npm run setup:supabase
-   ```
+4. Update `.env.local` with your Funifier API credentials
 
-5. Set up the database:
-   - Open Supabase Studio at https://fnp.centralsupernova.com.br
-   - Run the SQL schema from `supabase-schema.sql`
-
-6. Start the development server:
+5. Start the development server:
    ```bash
    npm run dev
    ```
 
-## Deployment
+## Deployment & Raspberry Pi Kiosk
 
-This project is configured for deployment on Vercel with automatic CI/CD.
+This project is deployed on Vercel and optimized for Raspberry Pi 4 kiosk mode on TV displays.
 
-### Quick Deploy to Vercel
-
-1. **Verify deployment setup**:
-   ```bash
-   npm run verify:deployment
-   ```
-
-2. **Push to GitHub** and connect to Vercel
-
-3. **Set environment variables** in Vercel dashboard:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-
-4. **Deploy automatically** via GitHub integration
-
-For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md) and [DEPLOYMENT-CHECKLIST.md](./DEPLOYMENT-CHECKLIST.md).
+For the complete guide covering Vercel deployment, Raspberry Pi setup, TV scaling, performance tuning, known issues, and troubleshooting, see **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)**.
 
 ## Available Scripts
 
@@ -85,15 +61,6 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md) and [
 - `npm run lint:fix` - Fix ESLint issues
 - `npm run format` - Format code with Prettier
 - `npm run type-check` - Run TypeScript type checking
-
-### Migration Scripts (Funifier → Supabase)
-
-- `npm run migrate:export` - Export data from Funifier API (if migrating)
-- `npm run migrate:import` - Import data to Supabase
-- `npm run migrate:schema` - Instructions for running database schema
-- `npm run setup:supabase` - Setup Supabase environment variables
-
-See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for complete migration instructions.
 
 ## Project Structure
 
@@ -114,8 +81,9 @@ src/
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL | `https://your-project.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | `your_anon_key_here` |
+| `VITE_FUNIFIER_SERVER_URL` | Funifier API base URL | `https://your-funifier-server.com` |
+| `VITE_FUNIFIER_API_KEY` | Your Funifier API key | `your_api_key_here` |
+| `VITE_FUNIFIER_AUTH_TOKEN` | Basic auth token for Funifier | `Basic your_base64_encoded_token_here` |
 | `VITE_APP_TITLE` | Application title | `Chicken Race Ranking` |
 | `VITE_API_POLLING_INTERVAL` | API polling interval in ms | `30000` |
 

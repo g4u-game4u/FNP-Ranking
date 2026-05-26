@@ -1,317 +1,381 @@
-# Funifier to Supabase Migration Guide
+# FNP Ranking - Deployment & Raspberry Pi Kiosk Guide
 
-## Overview
+> **Single source of truth** for deploying the Chicken Race Ranking app to Vercel and running it as a kiosk on Raspberry Pi connected to a TV.
 
-This guide walks you through migrating the FNP Ranking system from Funifier API to a self-hosted Supabase backend.
+---
+
+## Table of Contents
+
+1. [Prerequisites](#prerequisites)
+2. [Environment Variables](#environment-variables)
+3. [Vercel Deployment](#vercel-deployment)
+4. [Raspberry Pi Kiosk Setup](#raspberry-pi-kiosk-setup)
+5. [TV Display Configuration](#tv-display-configuration)
+6. [Performance Optimizations](#performance-optimizations)
+7. [Known Issues & Fixes](#known-issues--fixes)
+8. [Monitoring & Debugging](#monitoring--debugging)
+9. [Troubleshooting](#troubleshooting)
+
+---
 
 ## Prerequisites
 
-- Node.js 18+ installed
-- Access to Funifier API (current credentials)
-- Access to Supabase instance at https://fnp.centralsupernova.com.br
-- Supabase credentials configured
+| Requirement | Details |
+|-------------|---------|
+| Node.js | 18+ |
+| Raspberry Pi | Model 4 (4GB RAM recommended) |
+| Browser | Firefox (kiosk mode) or Chromium |
+| Vercel Account | [vercel.com](https://vercel.com) |
+| Funifier Credentials | API key + auth token |
 
-## Migration Steps
+---
 
-### Step 1: Set Up Environment Variables
+## Environment Variables
 
-Create a `.env.local` file with both Funifier and Supabase credentials:
+### Required Variables
 
-```env
-# Funifier (existing - keep for data export)
-VITE_FUNIFIER_SERVER_URL=https://service2.funifier.com/v3
-VITE_FUNIFIER_API_KEY=your_funifier_api_key
-VITE_FUNIFIER_AUTH_TOKEN=Basic_your_token
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_FUNIFIER_SERVER_URL` | Funifier API URL with version | `https://service2.funifier.com/v3` |
+| `VITE_FUNIFIER_API_KEY` | Your Funifier API key | `your_api_key_here` |
+| `VITE_FUNIFIER_AUTH_TOKEN` | Basic auth token | `Basic your_base64_token` |
 
-# Supabase (new)
-VITE_SUPABASE_URL=https://fnp.centralsupernova.com.br
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc5MzMzOTU1LCJleHAiOjE5MzcwMTM5NTV9.2m9jUfgKs8wuBHA6s0omP2ktzJ0dlreeJ_n2--djKPw
+### Optional Variables
 
-# Server-side only (for migration scripts)
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NzkzMzM5NTUsImV4cCI6MTkzNzAxMzk1NX0.LEHMolITvfN6LUo6-UzoilG8_0-hl5IawI1h1k4Erps
-```
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_APP_TITLE` | Application title | `Chicken Race Ranking` |
+| `VITE_API_POLLING_INTERVAL` | Polling interval (ms) | `30000` |
 
-### Step 2: Create Database Schema
+### Setting Up in Vercel
 
-1. Open Supabase Studio at https://fnp.centralsupernova.com.br
-2. Log in with:
-   - User: `supabase`
-   - Password: `49728e7a85bd404966c58cce1327cd10`
-3. Navigate to SQL Editor
-4. Copy the contents of `supabase-schema.sql`
-5. Paste and execute the SQL script
-6. Verify tables were created successfully
+1. Go to **Project Dashboard** → **Settings** → **Environment Variables**
+2. Add each variable for **Production**, **Preview**, and **Development** environments
+3. Use separate credentials for production vs. preview when possible
 
-Alternatively, if you have direct Postgres access:
+> **Security**: Never commit credentials to the repository. The `.env.example` file shows the required shape without real values.
+
+---
+
+## Vercel Deployment
+
+### Initial Setup
+
+1. **Import repository** in Vercel dashboard → "New Project" → select your GitHub repo
+2. **Build settings** (auto-detected):
+   - Framework: Vite
+   - Build command: `npm run build`
+   - Output directory: `dist`
+3. **Deploy** — Vercel will use the `vercel.json` config automatically
+
+### Automatic Deployments
+
+| Trigger | Environment |
+|---------|-------------|
+| Push to `main` | Production |
+| Pull request | Preview (URL posted as PR comment) |
+
+### Build Optimizations (built-in via `vercel.json`)
+
+- **Code splitting**: vendor (React), animations (Framer Motion), utils (Axios/date-fns)
+- **Caching**: 1-year immutable for static assets, no-cache for HTML
+- **Compression**: Automatic gzip/brotli
+- **Security headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
+
+### Rollback
+
+1. Go to **Deployments** tab in Vercel
+2. Find a previous successful deployment
+3. Click **"Promote to Production"**
+
+### Verify Deployment
 
 ```bash
-psql -h 127.0.0.1 -p 5436 -U postgres -d postgres -f supabase-schema.sql
-# Password: 15125f6c9a03be567f93215b5bd58c40
+npm run verify:deployment
 ```
 
-### Step 3: Export Data from Funifier
+---
 
-Export all current data from Funifier:
+## Raspberry Pi Kiosk Setup
+
+### Hardware Preparation
+
+1. Flash Raspberry Pi OS (64-bit recommended for better performance)
+2. Enable GPU memory split: set `gpu_mem=128` in `/boot/config.txt`
+3. Ensure stable network connection (Ethernet preferred over WiFi)
+
+### Browser Kiosk Mode
+
+**Firefox (recommended):**
 
 ```bash
-npm run migrate:export
+firefox --kiosk --new-instance https://your-vercel-url.vercel.app
 ```
 
-This will create a `funifier-export/` directory with:
-- `leaderboards.json` - All leaderboards
-- `leaderboard-data.json` - Player rankings for each leaderboard
-- `export-summary.json` - Summary of exported data
-
-For a complete export including player details and statuses (slower):
+**Chromium (alternative):**
 
 ```bash
-npm run migrate:export:full
+chromium-browser --kiosk --disable-infobars --noerrdialogs https://your-vercel-url.vercel.app
 ```
 
-### Step 4: Import Data to Supabase
+### Auto-Start on Boot
 
-Import the exported data into Supabase:
+Create a systemd service or add to `~/.config/lxsession/LXDE-pi/autostart`:
 
 ```bash
-npm run migrate:import
+@xset s off
+@xset -dpms
+@xset s noblank
+@firefox --kiosk --new-instance https://your-vercel-url.vercel.app
 ```
 
-This will:
-1. Import all leaderboards
-2. Extract and import unique players
-3. Import leaderboard entries (rankings)
-4. Initialize player statistics
+### Service Worker Auto-Update
 
-### Step 5: Verify Data
+The service worker automatically:
+- Uses timestamp-based cache versioning (unique on every build)
+- Activates immediately with `skipWaiting()`
+- Triggers automatic reload when new content is available
+- Checks for updates every **5 minutes** in kiosk mode
 
-1. Open Supabase Studio
-2. Navigate to Table Editor
-3. Check the following tables:
-   - `leaderboards` - Should contain all your leaderboards
-   - `players` - Should contain all unique players
-   - `leaderboard_entries` - Should contain current rankings
-   - `player_stats` - Should have entries for all players
+> After deploying a new version, the Raspberry Pi will auto-update within 5 minutes — no manual refresh needed.
 
-### Step 6: Test Supabase API Service
+---
 
-Create a test file to verify the Supabase service works:
+## TV Display Configuration
 
-```typescript
-// test-supabase.ts
-import { SupabaseApiService } from './src/services/supabaseApi';
+### Automatic Scaling
 
-async function test() {
-  const api = new SupabaseApiService();
-  
-  // Test connection
-  const connected = await api.testConnection();
-  console.log('Connected:', connected);
-  
-  // Test fetching leaderboards
-  const leaderboards = await api.getLeaderboards();
-  console.log('Leaderboards:', leaderboards.length);
-  
-  // Test fetching leaderboard data
-  if (leaderboards.length > 0) {
-    const data = await api.getLeaderboardData(leaderboards[0]._id);
-    console.log('Players:', data.leaders.length);
-  }
-}
+The app automatically detects display size and applies appropriate scaling:
 
-test();
-```
+| Display Size | Scale Factor | Touch Target |
+|-------------|-------------|--------------|
+| 12-24" (monitor) | 1.0-1.25x | 44px |
+| 25-32" (large monitor) | 1.6x | 56px |
+| 32-39" (small TV) | 2.0x | 72px |
+| 40-49" (TV) | 2.4x | 96px |
+| 50"+ (large TV) | 2.8x | 120px |
 
-Run with: `npx tsx test-supabase.ts`
+### TV-Specific Optimizations (automatic)
 
-### Step 7: Update Application Code
+- Enhanced contrast and brightness for viewing distance
+- Larger fonts with increased weight and letter-spacing
+- Disabled text selection for kiosk mode
+- Optimized font rendering for TV panels
+- Hardware-accelerated CSS transforms
 
-#### Option A: Switch Completely to Supabase
+### If Content Looks Wrong on TV
 
-Update `src/services/index.ts` to export Supabase service:
+The system uses `transform-origin: top center` on the `#root` element. If you see stretching:
+1. Verify the display resolution is correctly reported
+2. Check that no manual zoom is applied in the browser
+3. Use `Ctrl+Shift+P` to open the performance dashboard and check detected display size
 
-```typescript
-// Replace this:
-export { FunifierApiService } from './funifierApi';
+---
 
-// With this:
-export { SupabaseApiService as FunifierApiService } from './supabaseApi';
-```
+## Performance Optimizations
 
-#### Option B: Feature Flag (Recommended for Testing)
+### Bundle Size
 
-Add a feature flag to switch between Funifier and Supabase:
+| Metric | Value | Target |
+|--------|-------|--------|
+| Total bundle | ~400KB | <2MB |
+| Largest chunk | ~138KB (react-vendor) | <400KB |
+| All chunks | Under 400KB | ✓ |
 
-```typescript
-// src/config/features.ts
-export const USE_SUPABASE = import.meta.env.VITE_USE_SUPABASE === 'true';
+### ARM Architecture Optimizations
 
-// src/services/index.ts
-import { USE_SUPABASE } from '../config/features';
-import { FunifierApiService } from './funifierApi';
-import { SupabaseApiService } from './supabaseApi';
+- Automatic ARM device detection (userAgent/platform)
+- Memory cleanup triggered at 75% usage (1.5GB threshold)
+- Animation quality reduced when FPS drops below 25
+- Enhanced network caching for latency >1000ms
+- Emergency mode for critical resource usage
 
-export const ApiService = USE_SUPABASE ? SupabaseApiService : FunifierApiService;
-```
+### Performance Targets
 
-Then in `.env.local`:
-```env
-VITE_USE_SUPABASE=true
-```
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Initial load | <10 seconds | On Raspberry Pi 4 |
+| Frame rate | >25 FPS | ARM-optimized |
+| Memory usage | <1.5GB peak | For Pi 4 (4GB RAM) |
+| Input latency | <200ms | Touch/mouse |
+| Network caching | Aggressive | 30s polling default |
 
-### Step 8: Test Real-Time Updates (Optional)
+### Resource Priority (under constraints)
 
-Supabase provides real-time subscriptions. Update your components to use them:
+1. **Critical**: Leaderboard display, basic navigation
+2. **High**: Real-time updates, core animations
+3. **Medium**: Advanced animations, visual effects
+4. **Low**: Non-essential UI enhancements
 
-```typescript
-import { getSupabaseApi } from './services/supabaseApi';
+---
 
-const api = getSupabaseApi();
+## Known Issues & Fixes
 
-// Subscribe to leaderboard updates
-const subscription = api.subscribeToLeaderboard(leaderboardId, (payload) => {
-  console.log('Leaderboard updated:', payload);
-  // Refresh leaderboard data
-});
+### 1. Kiosk Loading Old Version (Cache Issue)
 
-// Unsubscribe when component unmounts
-subscription.unsubscribe();
-```
+**Symptom**: Old UI with current data after deployment.
 
-### Step 9: Deploy
+**Cause**: Service worker had static version numbers that never invalidated.
 
-1. Update environment variables in Vercel:
-   ```bash
-   vercel env add VITE_SUPABASE_URL production
-   vercel env add VITE_SUPABASE_ANON_KEY production
-   ```
+**Fix** (already applied):
+- Dynamic cache versioning with `Date.now()`
+- `skipWaiting()` for immediate service worker activation
+- Automatic client reload on cache update
+- 5-minute periodic update checks
 
-2. Deploy:
-   ```bash
-   npm run deploy:production
-   ```
+**Verify**: Check browser console for `"New content available, reloading..."` message.
 
-### Step 10: Monitor and Validate
+### 2. Goal Tracker Always Showing Complete
 
-1. Monitor application logs for errors
-2. Verify leaderboard data displays correctly
-3. Check real-time updates are working
-4. Monitor Supabase dashboard for performance
+**Symptom**: Progress bar permanently at 100%.
 
-## Rollback Plan
+**Cause**: Was tracking a single player who had already completed the challenge.
 
-If issues occur, you can quickly rollback:
+**Fix** (already applied):
+- Now tracks the player with highest active progress (the "leader")
+- Shows "(Líder)" label
+- Updates every 30 seconds
 
-1. Set `VITE_USE_SUPABASE=false` in environment variables
-2. Redeploy application
-3. System will revert to using Funifier API
+### 3. Stretched/Elongated Display on TV
+
+**Symptom**: Content horizontally stretched on TV screens.
+
+**Cause**: CSS transform applied to `body` with `transform-origin: top left`.
+
+**Fix** (already applied):
+- Transform moved to `#root`/`#app` containers
+- `transform-origin` changed to `top center`
+- Proper `100vh` height calculation
+- Box-sizing corrections
+
+---
+
+## Monitoring & Debugging
+
+### Performance Dashboard
+
+Press **`Ctrl+Shift+P`** to open the real-time debug dashboard showing:
+- Memory, CPU, frame rate, network latency
+- ARM device detection status
+- Active optimizations
+- Recent performance alerts
+- Raspberry Pi-specific tips
+
+### Automatic Alerting
+
+The app has a multi-level alerting system:
+- **Low**: Minor performance dip (logged only)
+- **Medium**: Noticeable degradation (reduce animations)
+- **High**: Significant issues (disable non-critical features)
+- **Critical**: Emergency mode (minimal rendering, aggressive cleanup)
+
+### Service Worker Logs
+
+Open browser console to see:
+- Cache update events
+- Version changes
+- Reload triggers
+- Update check intervals
+
+### Goal Tracker Monitoring
+
+Console logs show:
+- Top player progress fetching
+- Challenge progress percentage
+- Player switching events
+
+---
 
 ## Troubleshooting
 
-### Export Script Fails
+### Build Failures
 
-**Issue**: Authentication error when exporting from Funifier
+| Issue | Solution |
+|-------|----------|
+| Missing env vars | Ensure all `VITE_*` vars are set in Vercel |
+| Dependency errors | Run `npm ci` for clean install |
+| Type errors | Run `npm run type-check` locally first |
 
-**Solution**: 
-- Verify `VITE_FUNIFIER_API_KEY` and `VITE_FUNIFIER_AUTH_TOKEN` are correct
-- Check Funifier API is accessible
-- Try with `--with-player-details` flag removed for faster export
+### API Connection Issues
 
-### Import Script Fails
+| Issue | Solution |
+|-------|----------|
+| 401 Unauthorized | Check `VITE_FUNIFIER_AUTH_TOKEN` format (`Basic ...`) |
+| CORS errors | Verify Funifier server allows your Vercel domain |
+| Timeout | Check network stability, app will auto-retry |
 
-**Issue**: Cannot connect to Supabase
+### Raspberry Pi Issues
 
-**Solution**:
-- Verify `SUPABASE_SERVICE_ROLE_KEY` is set correctly
-- Check Supabase instance is running
-- Verify network connectivity to https://fnp.centralsupernova.com.br
+| Issue | Solution |
+|-------|----------|
+| Blank screen | Check URL is correct, network is connected |
+| Slow loading | Verify GPU memory split, use Ethernet |
+| High memory | Restart browser, check for memory leaks in console |
+| No auto-update | Check service worker is registered (console) |
 
-### Missing Data After Import
+### TV Display Issues
 
-**Issue**: Some players or leaderboards are missing
+| Issue | Solution |
+|-------|----------|
+| Too small | Check display detection in `Ctrl+Shift+P` dashboard |
+| Stretched | Ensure no manual zoom, check `transform-origin` |
+| Blurry text | Verify hardware acceleration is enabled in browser |
+| Cut off edges | Check TV overscan settings, try "PC mode" on TV |
 
-**Solution**:
-- Check `funifier-export/export-summary.json` for export statistics
-- Review import script logs for errors
-- Re-run import script (it handles duplicates gracefully)
+---
 
-### Real-Time Updates Not Working
+## Quick Reference
 
-**Issue**: Leaderboard doesn't update automatically
+### Build & Deploy
 
-**Solution**:
-- Verify Supabase Realtime is enabled in project settings
-- Check browser console for WebSocket errors
-- Ensure RLS policies allow reading from tables
+```bash
+# Local development
+npm run dev
 
-## Performance Optimization
+# Production build
+npm run build
 
-### Database Indexes
+# Preview production build locally
+npm run preview
 
-The schema includes indexes for common queries. Monitor slow queries in Supabase and add indexes as needed:
+# Verify deployment config
+npm run verify:deployment
 
-```sql
-CREATE INDEX idx_custom ON table_name(column_name);
+# Lint & format
+npm run lint:fix && npm run format
 ```
 
-### Caching
+### Kiosk Launch Commands
 
-Consider adding Redis caching for frequently accessed data:
+```bash
+# Firefox kiosk (recommended)
+firefox --kiosk --new-instance https://your-app.vercel.app
 
-```typescript
-// Example with Vercel KV
-import { kv } from '@vercel/kv';
-
-async function getCachedLeaderboard(id: string) {
-  const cached = await kv.get(`leaderboard:${id}`);
-  if (cached) return cached;
-  
-  const data = await api.getLeaderboardData(id);
-  await kv.set(`leaderboard:${id}`, data, { ex: 60 }); // Cache for 60s
-  return data;
-}
+# Chromium kiosk (alternative)
+chromium-browser --kiosk --disable-infobars https://your-app.vercel.app
 ```
 
-## N8N Integration (Optional)
+### Key URLs
 
-If you want to use N8N for automation:
+| Resource | URL |
+|----------|-----|
+| Vercel Dashboard | `https://vercel.com/your-team/fnp-ranking` |
+| Production | Your configured Vercel domain |
+| Preview | Auto-generated per PR |
 
-1. Get your N8N API key from https://fnp.centralsupernova.com.br
-2. Update `.kiro/settings/mcp.json`:
-   ```json
-   {
-     "mcpServers": {
-       "n8n": {
-         "command": "npx",
-         "args": ["-y", "n8n-mcp@latest"],
-         "env": {
-           "N8N_API_URL": "https://fnp.centralsupernova.com.br",
-           "N8N_API_KEY": "your_actual_n8n_api_key"
-         },
-         "disabled": false
-       }
-     }
-   }
-   ```
+---
 
-3. Create workflows for:
-   - Automatic leaderboard updates
-   - Challenge event processing
-   - Notifications
-   - Data synchronization
+## Security Checklist
 
-## Support
+- [ ] Environment variables set in Vercel (not in code)
+- [ ] Production credentials separate from development
+- [ ] HTTPS enforced (automatic with Vercel)
+- [ ] No sensitive data in client-side bundle
+- [ ] Security headers configured in `vercel.json`
+- [ ] Input validation active on all user inputs
+- [ ] Output sanitization prevents XSS
+- [ ] Service worker uses secure update mechanism
 
-For issues or questions:
-1. Check the troubleshooting section above
-2. Review Supabase logs in Studio
-3. Check application logs in Vercel
-4. Review the migration plan in `FUNIFIER_TO_SUPABASE_MIGRATION.md`
+---
 
-## Next Steps
-
-After successful migration:
-1. ✅ Remove Funifier credentials from environment variables
-2. ✅ Archive Funifier export data
-3. ✅ Update documentation to reference Supabase
-4. ✅ Set up monitoring and alerts
-5. ✅ Create backup strategy for Supabase data
+*This guide consolidates all deployment, optimization, and kiosk configuration documentation. For code-level implementation details, see the inline comments and type definitions in the source code.*
