@@ -50,7 +50,20 @@ A gamified leaderboard visualization system that transforms traditional ranking 
 
 This project is deployed on Vercel and optimized for Raspberry Pi 4 kiosk mode on TV displays.
 
-For the complete guide covering Vercel deployment, Raspberry Pi setup, TV scaling, performance tuning, known issues, and troubleshooting, see **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)**.
+### Quick Deploy to Vercel
+
+1. **Push to GitHub** and connect to Vercel
+
+2. **Set environment variables** in Vercel dashboard:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (for API routes)
+
+3. **Deploy automatically** via GitHub integration
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+For the complete guide covering Raspberry Pi setup, TV scaling, performance tuning, known issues, and troubleshooting, see **[RASPBERRY_PI_KIOSK_GUIDE.md](./RASPBERRY_PI_KIOSK_GUIDE.md)**.
 
 ## Available Scripts
 
