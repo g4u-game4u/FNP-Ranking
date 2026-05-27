@@ -6,9 +6,8 @@ const STATIC_CACHE_NAME = `chicken-race-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `chicken-race-dynamic-v${CACHE_VERSION}`;
 
 // Assets to cache immediately
+// NOTE: We exclude index.html to ensure CSP updates are always fresh
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/vite.svg',
   // Add other static assets as needed
@@ -106,9 +105,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle navigation requests with network-first, fallback to cache
-  if (request.mode === 'navigate') {
-    event.respondWith(networkFirstStrategy(request));
+  // Handle navigation requests - ALWAYS fetch fresh HTML (never cache)
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(fetch(request));
     return;
   }
 
