@@ -567,33 +567,39 @@ export const useChickenRaceManager = (config: ChickenRaceManagerConfig = {}) => 
   ]);
 
   // If initialPlayers are provided, use them directly and skip API initialization
+  const prevPlayersRef = useRef<string>('');
   useEffect(() => {
-    if (initialPlayers && initialPlayers.length > 0) {
-      console.log('🐔 Using pre-fetched initialPlayers, skipping API initialization');
-      setInitializationAttempted(true);
-      isInitializingRef.current = false;
-      setUsingMockData(false);
+    if (!initialPlayers || initialPlayers.length === 0) return;
 
-      const leaderboardStore = useLeaderboardStore.getState();
-      // Set a synthetic leaderboard so the UI considers itself initialized
-      if (!leaderboardStore.currentLeaderboard) {
-        const syntheticLeaderboard = {
-          _id: 'SNAPSHOT',
-          title: 'Ranking FNP',
-          description: 'Dados do snapshot diário',
-          principalType: 0,
-          operation: { type: 0, achievement_type: 0, item: 'total', sort: 1 },
-          period: { type: 0, timeAmount: 0, timeScale: 0 },
-        };
-        leaderboardStore.setLeaderboards([syntheticLeaderboard]);
-        leaderboardStore.setCurrentLeaderboard(syntheticLeaderboard);
-        leaderboardStore.setCurrentLeaderboardId(syntheticLeaderboard._id);
-      }
+    // Only update if the data actually changed (avoid infinite loop from new array references)
+    const playersKey = initialPlayers.map(p => `${p._id}:${p.total}`).join(',');
+    if (playersKey === prevPlayersRef.current) return;
+    prevPlayersRef.current = playersKey;
 
-      updatePlayers(initialPlayers);
-      setLoadingState('leaderboards', false);
-      setLoadingState('currentLeaderboard', false);
+    console.log('🐔 Using pre-fetched initialPlayers, skipping API initialization');
+    setInitializationAttempted(true);
+    isInitializingRef.current = false;
+    setUsingMockData(false);
+
+    const leaderboardStore = useLeaderboardStore.getState();
+    // Set a synthetic leaderboard so the UI considers itself initialized
+    if (!leaderboardStore.currentLeaderboard) {
+      const syntheticLeaderboard = {
+        _id: 'SNAPSHOT',
+        title: 'Ranking FNP',
+        description: 'Dados do snapshot diário',
+        principalType: 0,
+        operation: { type: 0, achievement_type: 0, item: 'total', sort: 1 },
+        period: { type: 0, timeAmount: 0, timeScale: 0 },
+      };
+      leaderboardStore.setLeaderboards([syntheticLeaderboard]);
+      leaderboardStore.setCurrentLeaderboard(syntheticLeaderboard);
+      leaderboardStore.setCurrentLeaderboardId(syntheticLeaderboard._id);
     }
+
+    updatePlayers(initialPlayers);
+    setLoadingState('leaderboards', false);
+    setLoadingState('currentLeaderboard', false);
   }, [initialPlayers, updatePlayers, setLoadingState]);
 
   // Auto-initialize on mount if API config is provided - StrictMode compatible
