@@ -43,39 +43,41 @@ export function initializeSecurity(): void {
 
 /**
  * Set up Content Security Policy for enhanced security
+ * NOTE: CSP is already defined in index.html and vercel.json headers.
+ * This function only adds a fallback CSP if none exists (e.g., local dev without the HTML meta tag).
  */
 function setupContentSecurityPolicy(): void {
   if (typeof document === 'undefined') {
     return;
   }
 
-  // Check if CSP is already set
+  // CSP is already set via HTML meta tag or server headers - don't add another one
+  // Multiple CSPs are intersected (most restrictive wins), which causes blocked requests
   const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
   if (existingCSP) {
     return;
   }
 
-  // Create a basic CSP for kiosk deployment
+  // Only add CSP if none exists at all (fallback for edge cases)
   const cspMeta = document.createElement('meta');
   cspMeta.setAttribute('http-equiv', 'Content-Security-Policy');
   
-  // Get the API server URL from environment for CSP
-  const apiServerUrl = import.meta.env.VITE_FUNIFIER_SERVER_URL;
-  if (!apiServerUrl) {
-    console.warn('[Security] No API server URL configured, using restrictive CSP');
-  }
+  // Get the Supabase URL from environment for CSP
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseOrigin = supabaseUrl ? new URL(supabaseUrl).origin : '';
+  const supabaseWss = supabaseOrigin ? supabaseOrigin.replace('https://', 'wss://') : '';
   
-  const connectSrc = apiServerUrl 
-    ? `'self' ${new URL(apiServerUrl).origin} https://sheets.googleapis.com`
+  const connectSrc = supabaseOrigin 
+    ? `'self' ${supabaseOrigin} ${supabaseWss} https://sheets.googleapis.com`
     : "'self' https://sheets.googleapis.com";
   
   cspMeta.setAttribute('content', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'", // Allow inline scripts for React
-    "style-src 'self' 'unsafe-inline'", // Allow inline styles for CSS-in-JS
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https:",
     `connect-src ${connectSrc}`,
-    "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'"
