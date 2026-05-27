@@ -44,9 +44,10 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
         const leaderboards = await apiService.getLeaderboards();
         if (!leaderboards || leaderboards.length === 0) return;
 
-        // Get the first leaderboard's players
+        // Get the first leaderboard's players via getLeaderboardData
         const firstLeaderboard = leaderboards[0];
-        const players = await apiService.getLeaderboardPlayers(firstLeaderboard.id);
+        const leaderboardData = await apiService.getLeaderboardData(firstLeaderboard._id || firstLeaderboard.id, { live: true });
+        const players = leaderboardData?.leaders || [];
         if (!players || players.length === 0) return;
 
         // Fetch challenge progress for each player and find the highest
