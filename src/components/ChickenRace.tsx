@@ -165,12 +165,10 @@ const Chicken: React.FC<ChickenProps> = React.memo(({ player, position, onHover,
         <div className={`chicken-sprite mb-1 flex items-center justify-center transition-transform will-change-transform ${
           qualitySettings.enableTransitions ? 'hover:scale-110' : ''
         } ${isFullscreen
-          ? 'w-16 h-16 text-2xl'
-          : 'w-12 h-12 text-lg'
+          ? 'w-16 h-16'
+          : 'w-12 h-12'
           }`}>
-          <div className="running-chicken">
-            🐓
-          </div>
+          <div className={`running-chicken ${isFullscreen ? 'w-16 h-16' : ''}`} />
         </div>
         {/* Player Name */}
         <div className={`player-name-tag font-medium text-gray-800 bg-white/80 px-2 py-1 rounded truncate ${
@@ -467,8 +465,8 @@ export const ChickenRace: React.FC<ChickenRaceProps> = React.memo(({
     return (
       <div className="chicken-race-container w-full h-96 bg-gradient-to-b from-sky-200 to-green-200 rounded-lg flex items-center justify-center">
         <div className="text-center">
-          <div className="loading-chicken text-4xl mb-4">
-            <div className="running-chicken">🐓</div>
+          <div className="loading-chicken mb-4 flex justify-center">
+            <div className="running-chicken w-16 h-16" />
           </div>
           <p className="text-gray-600">Carregando...</p>
         </div>

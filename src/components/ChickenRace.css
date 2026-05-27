@@ -50,29 +50,34 @@
   animation-delay: 0s, 0.5s, 1s, 1.5s;
 }
 
-/* Running chicken sprite - facing right towards finish line */
+/* Running chicken sprite - using frame animation */
 .running-chicken {
-  font-size: 1.5rem;
-  transform: scaleX(-1); /* Flip horizontally to face right */
+  width: 48px;
+  height: 48px;
   display: inline-block;
-  animation: chicken-run 0.8s ease-in-out infinite;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+  background-image: url('/sprites/chicken-frame-1.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: chicken-sprite-frames 0.4s steps(1) infinite, chicken-bob 0.8s ease-in-out infinite;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+  image-rendering: pixelated;
 }
 
-/* Running animation for the chicken */
-@keyframes chicken-run {
-  0%, 100% { 
-    transform: scaleX(-1) translateY(0px) rotate(0deg); 
-  }
-  25% { 
-    transform: scaleX(-1) translateY(-1px) rotate(-2deg); 
-  }
-  50% { 
-    transform: scaleX(-1) translateY(0px) rotate(0deg); 
-  }
-  75% { 
-    transform: scaleX(-1) translateY(-1px) rotate(2deg); 
-  }
+/* Sprite frame animation - cycles through 4 frames */
+@keyframes chicken-sprite-frames {
+  0%   { background-image: url('/sprites/chicken-frame-1.png'); }
+  25%  { background-image: url('/sprites/chicken-frame-2.png'); }
+  50%  { background-image: url('/sprites/chicken-frame-3.png'); }
+  75%  { background-image: url('/sprites/chicken-frame-4.png'); }
+}
+
+/* Subtle bobbing motion while running */
+@keyframes chicken-bob {
+  0%, 100% { transform: translateY(0px); }
+  25%      { transform: translateY(-2px); }
+  50%      { transform: translateY(0px); }
+  75%      { transform: translateY(-1px); }
 }
 
 /* Stagger animations for different chickens */
@@ -199,7 +204,7 @@
 }
 
 .loading-chicken .running-chicken {
-  animation: chicken-run 0.6s ease-in-out infinite, loading-pulse 2s ease-in-out infinite;
+  animation: chicken-sprite-frames 0.3s steps(1) infinite, loading-pulse 2s ease-in-out infinite;
 }
 
 @keyframes loading-bounce {
