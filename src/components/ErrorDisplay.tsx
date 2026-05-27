@@ -44,7 +44,7 @@ const getErrorMessage = (error: ApiError): string => {
       return 'Invalid data received from the server. Please try refreshing the page.';
     
     case 'config':
-      return 'Configuration error. Please check your Funifier API settings.';
+      return 'Configuration error. Please check your API settings.';
     
     default:
       return 'An unexpected error occurred. Please try again.';

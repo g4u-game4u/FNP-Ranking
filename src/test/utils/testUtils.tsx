@@ -2,7 +2,7 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { vi } from 'vitest';
-import type { FunifierConfig, Leaderboard, Player, LeaderboardResponse } from '../../types';
+import type { Leaderboard, Player, LeaderboardResponse, SupabaseConfig } from '../../types';
 
 // Mock data generators
 export const createMockPlayer = (overrides: Partial<Player> = {}): Player => ({
@@ -44,10 +44,9 @@ export const createMockLeaderboardResponse = (
   leaders: players?.map(p => createMockPlayer(p)) || [createMockPlayer()],
 });
 
-export const createMockConfig = (overrides: Partial<FunifierConfig> = {}): FunifierConfig => ({
-  serverUrl: 'https://test.funifier.com',
-  apiKey: 'test-api-key',
-  authToken: 'Basic test-token',
+export const createMockConfig = (overrides: Partial<SupabaseConfig> = {}): SupabaseConfig => ({
+  url: 'https://test.supabase.co',
+  anonKey: 'test-anon-key',
   ...overrides,
 });
 
@@ -235,9 +234,8 @@ export const createMockStoreState = () => ({
 // Environment variable helpers
 export const mockEnvironmentVariables = (vars: Record<string, string> = {}) => {
   const defaultVars = {
-    VITE_FUNIFIER_SERVER_URL: 'https://test.funifier.com',
-    VITE_FUNIFIER_API_KEY: 'test-api-key',
-    VITE_FUNIFIER_AUTH_TOKEN: 'Basic test-token',
+    VITE_SUPABASE_URL: 'https://test.supabase.co',
+    VITE_SUPABASE_ANON_KEY: 'test-anon-key',
   };
 
   Object.entries({ ...defaultVars, ...vars }).forEach(([key, value]) => {

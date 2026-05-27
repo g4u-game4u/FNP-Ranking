@@ -1,5 +1,5 @@
 // Supabase Edge Function: Get Leaderboard Data
-// Returns leaderboard data with players in Funifier-compatible format
+// Returns leaderboard data with players in app-compatible format
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Transform to Funifier-compatible format
+    // Transform to app-compatible format
     const response = {
       leaderboard: {
         _id: leaderboard.id,

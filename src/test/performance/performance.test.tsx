@@ -7,7 +7,7 @@ import App from '../../App';
 import { ChickenRace } from '../../components/ChickenRace';
 import { Sidebar } from '../../components/Sidebar';
 import { DetailedRanking } from '../../components/DetailedRanking';
-import { FunifierApiService } from '../../services/funifierApi';
+import { SupabaseApiService } from '../../services/supabaseApi';
 import { 
   createMockApiService, 
   mockPlayersSet, 
@@ -18,7 +18,7 @@ import {
 } from '../utils/testUtils';
 
 // Mock the API service
-vi.mock('../../services/funifierApi');
+vi.mock('../../services/supabaseApi');
 
 describe('Performance Tests', () => {
   let mockApiService: any;
@@ -28,7 +28,7 @@ describe('Performance Tests', () => {
     mockEnvironmentVariables();
     
     mockApiService = createMockApiService();
-    (FunifierApiService as any).mockImplementation(() => mockApiService);
+    (SupabaseApiService as any).mockImplementation(() => mockApiService);
   });
 
   afterEach(() => {

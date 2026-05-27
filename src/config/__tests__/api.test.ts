@@ -35,7 +35,7 @@ describe('ApiConfigManager', () => {
     it('should remove trailing slash from server URL', () => {
       // Create a custom config with trailing slash
       const customConfig = {
-        serverUrl: 'https://test.funifier.com/',
+        serverUrl: 'https://test.example.com/',
         apiKey: 'test-key',
         authToken: 'test-token',
       };
@@ -52,7 +52,7 @@ describe('ApiConfigManager', () => {
       })();
 
       const result = service.testInitialize(customConfig);
-      expect(result.serverUrl).toBe('https://test.funifier.com');
+      expect(result.serverUrl).toBe('https://test.example.com');
     });
   });
 
@@ -86,11 +86,11 @@ describe('ApiConfigManager', () => {
       const originalConfig = configManager.initializeConfig();
       
       configManager.updateConfig({
-        serverUrl: 'https://updated.funifier.com',
+        serverUrl: 'https://updated.example.com',
       });
 
       const config = configManager.getConfig();
-      expect(config.serverUrl).toBe('https://updated.funifier.com');
+      expect(config.serverUrl).toBe('https://updated.example.com');
       expect(config.apiKey).toBe(originalConfig.apiKey); // Should remain unchanged
     });
   });

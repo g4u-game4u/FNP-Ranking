@@ -198,7 +198,7 @@ export class SecurityService {
 
     // Check for exposed sensitive data in global scope
     if (typeof window !== 'undefined') {
-      const sensitiveKeys = ['FUNIFIER_API_KEY', 'FUNIFIER_AUTH_TOKEN', 'apiKey', 'authToken'];
+      const sensitiveKeys = ['apiKey', 'authToken'];
       sensitiveKeys.forEach(key => {
         if ((window as any)[key]) {
           issues.push(`Sensitive data exposed in global scope: ${key}`);

@@ -320,7 +320,7 @@ const highFrequencyProcessor = new HighFrequencyWebhookProcessor();
 
 
 /**
- * Serverless function to handle Funifier webhook data with comprehensive error handling
+ * Serverless function to handle webhook data with comprehensive error handling
  */
 export default async function handler(
   req: VercelRequest,
@@ -329,7 +329,7 @@ export default async function handler(
   // Set CORS headers for webhook endpoint
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-funifier-signature');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-webhook-signature');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -376,7 +376,7 @@ export default async function handler(
       return handleWebhookError(error, res);
     }
 
-    const signature = req.headers['x-funifier-signature'] as string;
+    const signature = req.headers['x-webhook-signature'] as string;
 
     // Validate webhook signature
     try {

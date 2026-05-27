@@ -1,7 +1,7 @@
 /**
  * Challenge Notification Popup Component
  * 
- * Displays popup notifications when players complete challenges in Funifier.
+ * Displays popup notifications when players complete challenges.
  * Features celebratory visual elements, responsive design, and kiosk mode compatibility.
  * Includes smooth entrance/exit animations and configurable automatic dismissal timing.
  * Enhanced with comprehensive error handling and graceful degradation.

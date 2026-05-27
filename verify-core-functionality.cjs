@@ -167,7 +167,7 @@ function verifyCoreFunctionality() {
     console.log('\n🚀 Ready for integration testing!');
     console.log('\n📝 Next Steps:');
     console.log('   1. Deploy to Vercel to test serverless functions');
-    console.log('   2. Configure Funifier webhook integration');
+    console.log('   2. Configure webhook integration');
     console.log('   3. Test end-to-end notification flow');
     console.log('   4. Open test-popup.html in browser to test UI components');
   } else {

@@ -95,8 +95,6 @@ function cleanupGlobalScope(): void {
   }
 
   const sensitiveKeys = [
-    'FUNIFIER_API_KEY',
-    'FUNIFIER_AUTH_TOKEN',
     'GOOGLE_SHEETS_API_KEY',
     'apiKey',
     'authToken',

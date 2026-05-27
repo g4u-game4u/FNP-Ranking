@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import { useChickenRaceManager } from '../../hooks/useChickenRaceManager';
 import { ErrorDisplay } from '../ErrorDisplay';
 import { LoadingDisplay, OverlayLoading } from '../LoadingDisplay';
-import type { FunifierConfig } from '../../types';
+import type { SupabaseConfig } from '../../types';
 
 /**
  * Example component demonstrating real-time updates and error handling
  */
 export const RealTimeUpdatesExample: React.FC = () => {
-  const [apiConfig, setApiConfig] = useState<FunifierConfig>({
-    serverUrl: 'https://your-funifier-server.com',
-    apiKey: 'your-demo-api-key',
-    authToken: 'Basic your-demo-auth-token',
+  const [apiConfig, setApiConfig] = useState<SupabaseConfig>({
+    url: 'https://your-project.supabase.co',
+    anonKey: 'your-anon-key',
   });
 
   const {
@@ -56,7 +55,7 @@ export const RealTimeUpdatesExample: React.FC = () => {
     },
   });
 
-  const handleConfigChange = (field: keyof FunifierConfig, value: string) => {
+  const handleConfigChange = (field: keyof SupabaseConfig, value: string) => {
     setApiConfig(prev => ({
       ...prev,
       [field]: value,

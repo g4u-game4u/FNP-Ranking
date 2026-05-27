@@ -4,11 +4,11 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import App from '../../App';
-import { FunifierApiService } from '../../services/funifierApi';
+import { SupabaseApiService } from '../../services/supabaseApi';
 import type { Leaderboard, LeaderboardResponse, Player } from '../../types';
 
 // Mock the API service
-vi.mock('../../services/funifierApi');
+vi.mock('../../services/supabaseApi');
 
 describe('App End-to-End Tests', () => {
   let mockApiService: any;
@@ -92,9 +92,8 @@ describe('App End-to-End Tests', () => {
     vi.useFakeTimers();
     
     // Mock environment variables
-    vi.stubEnv('VITE_FUNIFIER_SERVER_URL', 'https://test.funifier.com');
-    vi.stubEnv('VITE_FUNIFIER_API_KEY', 'test-api-key');
-    vi.stubEnv('VITE_FUNIFIER_AUTH_TOKEN', 'Basic test-token');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
 
     // Create mock API service
     mockApiService = {
@@ -104,14 +103,13 @@ describe('App End-to-End Tests', () => {
       testConnection: vi.fn().mockResolvedValue(true),
       setAuthToken: vi.fn(),
       getConfig: vi.fn().mockReturnValue({
-        serverUrl: 'https://test.funifier.com',
-        apiKey: 'test-api-key',
-        authToken: 'Basic test-token',
+        url: 'https://test.supabase.co',
+        anonKey: 'test-anon-key',
       }),
     };
 
     // Mock the constructor
-    (FunifierApiService as any).mockImplementation(() => mockApiService);
+    (SupabaseApiService as any).mockImplementation(() => mockApiService);
   });
 
   afterEach(() => {

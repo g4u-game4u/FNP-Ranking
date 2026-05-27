@@ -1,5 +1,5 @@
 /**
- * Import Funifier data into Supabase
+ * Import data into Supabase
  * This script reads the exported JSON files and imports them into Supabase
  */
 
@@ -12,7 +12,7 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://fnp.centralsupern
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Input directory
-const INPUT_DIR = path.join(__dirname, '..', 'funifier-export');
+const INPUT_DIR = path.join(__dirname, '..', 'data-export');
 
 // Create Supabase client with service role key (full access)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
@@ -39,7 +39,7 @@ function readJsonFile(filename: string): any {
  */
 async function importLeaderboards(leaderboards: any[]): Promise<Map<string, string>> {
   console.log(`\n📊 Importing ${leaderboards.length} leaderboards...`);
-  const idMap = new Map<string, string>(); // funifier_id -> supabase_id
+  const idMap = new Map<string, string>(); // old_id -> supabase_id
   
   for (const lb of leaderboards) {
     try {
@@ -155,11 +155,11 @@ async function importLeaderboardEntries(
   let successCount = 0;
   let errorCount = 0;
   
-  for (const [funifierLeaderboardId, data] of Object.entries(leaderboardData)) {
-    const supabaseLeaderboardId = leaderboardIdMap.get(funifierLeaderboardId);
+  for (const [sourceLeaderboardId, data] of Object.entries(leaderboardData)) {
+    const supabaseLeaderboardId = leaderboardIdMap.get(sourceLeaderboardId);
     
     if (!supabaseLeaderboardId) {
-      console.error(`   ⚠️  Skipping entries for unknown leaderboard: ${funifierLeaderboardId}`);
+      console.error(`   ⚠️  Skipping entries for unknown leaderboard: ${sourceLeaderboardId}`);
       continue;
     }
     
@@ -167,7 +167,7 @@ async function importLeaderboardEntries(
       continue;
     }
     
-    console.log(`   Processing ${data.players.length} entries for leaderboard ${funifierLeaderboardId}...`);
+    console.log(`   Processing ${data.players.length} entries for leaderboard ${sourceLeaderboardId}...`);
     
     for (const player of data.players) {
       const playerCode = player.player || player._id;
@@ -260,7 +260,7 @@ async function importToSupabase() {
   // Check if export directory exists
   if (!fs.existsSync(INPUT_DIR)) {
     console.error(`❌ Export directory not found: ${INPUT_DIR}`);
-    console.error('   Please run the export script first: npm run export:funifier');
+    console.error('   Please run the export script first: npm run migrate:import');
     process.exit(1);
   }
   

@@ -14,9 +14,8 @@ const STATIC_ASSETS = [
 ];
 
 // API endpoints to cache with network-first strategy
-// Note: In production, this should be dynamically configured
 const API_ENDPOINTS = [
-  // Funifier API endpoints will be configured at runtime
+  // API endpoints will be configured at runtime
 ];
 
 // Install event - cache static assets and skip waiting immediately

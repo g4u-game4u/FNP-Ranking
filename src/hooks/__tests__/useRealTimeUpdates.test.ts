@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useRealTimeUpdates } from '../useRealTimeUpdates';
-import { FunifierApiService } from '../../services/funifierApi';
+import { SupabaseApiService } from '../../services/supabaseApi';
 import type { Player, LeaderboardResponse, ApiError } from '../../types';
 
 // Mock the useLeaderboardData hook
@@ -22,7 +22,7 @@ vi.mock('../useAppState', () => ({
 // Mock API service
 const mockApiService = {
   getLeaderboardData: vi.fn(),
-} as unknown as FunifierApiService;
+} as unknown as SupabaseApiService;
 
 // Mock data
 const mockPlayers: Player[] = [

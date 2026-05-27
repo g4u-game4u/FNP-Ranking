@@ -2,8 +2,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useChickenRaceManager } from '../useChickenRaceManager';
-import { FunifierApiService } from '../../services/funifierApi';
-import type { Leaderboard, Player, LeaderboardResponse, FunifierConfig } from '../../types';
+import { SupabaseApiService } from '../../services/supabaseApi';
+import type { Leaderboard, Player, LeaderboardResponse, SupabaseConfig } from '../../types';
 
 // Mock the store hooks
 const mockLeaderboardData = {
@@ -76,7 +76,7 @@ vi.mock('../usePositionTransitions', () => ({
 }));
 
 // Mock API service
-vi.mock('../../services/funifierApi');
+vi.mock('../../services/supabaseApi');
 
 // Mock data
 const mockLeaderboards: Leaderboard[] = [
@@ -138,14 +138,13 @@ const mockLeaderboardResponse: LeaderboardResponse = {
   leaders: mockPlayers,
 };
 
-const mockApiConfig: FunifierConfig = {
-  serverUrl: 'https://test.funifier.com',
-  apiKey: 'test-api-key',
-  authToken: 'test-auth-token',
+const mockApiConfig: SupabaseConfig = {
+  url: 'https://test.supabase.co',
+  anonKey: 'test-anon-key',
 };
 
 describe('useChickenRaceManager Integration', () => {
-  let mockApiService: jest.Mocked<FunifierApiService>;
+  let mockApiService: jest.Mocked<SupabaseApiService>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -173,7 +172,7 @@ describe('useChickenRaceManager Integration', () => {
     } as any;
 
     // Mock the constructor
-    (FunifierApiService as any).mockImplementation(() => mockApiService);
+    (SupabaseApiService as any).mockImplementation(() => mockApiService);
   });
 
   afterEach(() => {
@@ -198,7 +197,7 @@ describe('useChickenRaceManager Integration', () => {
         apiConfig: mockApiConfig,
       }));
 
-      expect(FunifierApiService).toHaveBeenCalledWith(mockApiConfig);
+      expect(SupabaseApiService).toHaveBeenCalledWith(mockApiConfig);
     });
 
     it('should auto-initialize when API config is provided', async () => {
@@ -243,7 +242,7 @@ describe('useChickenRaceManager Integration', () => {
 
       expect(mockLeaderboardData.setError).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Failed to connect to Funifier API',
+          message: 'Failed to connect to API',
         })
       );
     });
@@ -549,7 +548,7 @@ describe('useChickenRaceManager Integration', () => {
         apiConfig: mockApiConfig,
       }));
 
-      expect(result.current.apiService).toBeInstanceOf(FunifierApiService);
+      expect(result.current.apiService).toBeInstanceOf(SupabaseApiService);
     });
   });
 });

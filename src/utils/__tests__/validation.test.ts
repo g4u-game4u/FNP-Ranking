@@ -67,7 +67,7 @@ describe('Validation Utilities', () => {
     it('should validate HTTP and HTTPS URLs', () => {
       expect(validateUrl('https://example.com')).toBe(true);
       expect(validateUrl('http://example.com')).toBe(true);
-      expect(validateUrl('https://api.funifier.com/v3')).toBe(true);
+      expect(validateUrl('https://api.example.com/v3')).toBe(true);
     });
 
     it('should reject invalid URLs', () => {

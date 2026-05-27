@@ -21,7 +21,6 @@ export interface SupabaseConfig {
 
 /**
  * Supabase API Service for handling all database communications
- * Implements same interface as FunifierApiService for drop-in replacement
  */
 export class SupabaseApiService {
   private supabase: SupabaseClient;
@@ -80,7 +79,7 @@ export class SupabaseApiService {
         throw new Error(`Failed to fetch leaderboards: ${error.message}`);
       }
 
-      // Map Supabase schema to Funifier format
+      // Map Supabase schema to app format
       return (data || []).map((lb: any) => ({
         _id: lb.id,
         title: lb.title || `Leaderboard ${lb.id}`,
@@ -129,7 +128,7 @@ export class SupabaseApiService {
         throw new Error(`Failed to fetch leaderboard metadata: ${lbError.message}`);
       }
 
-      // Map to Funifier format
+      // Map to app format
       const leaders = (data || []).map((entry: any) => {
         const player = entry.player;
         return {
@@ -234,9 +233,9 @@ export class SupabaseApiService {
         throw new Error(`Failed to fetch challenge progress: ${progressError.message}`);
       }
 
-      // Map to Funifier format
+      // Map to app format
       const challengeProgress = (progress || []).map((cp: any) => ({
-        challenge_id: cp.challenge.funifier_id || cp.challenge_id,
+        challenge_id: cp.challenge.legacy_id || cp.challenge_id,
         challenge_name: cp.challenge.name,
         rules_completed: cp.rules_completed,
         rules_total: cp.rules_total,

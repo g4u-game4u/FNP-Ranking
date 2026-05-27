@@ -56,7 +56,7 @@ SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_CONFIG.SUPABASE_SERVICE_ROLE_KEY}
 
   console.log('\n💡 Next Steps:');
   console.log('   1. Run database schema: Open Supabase Studio and run supabase-schema.sql');
-  console.log('   2. Export Funifier data: npm run migrate:export (if migrating from Funifier)');
+  console.log('   2. Import data: npm run migrate:import');
   console.log('   3. Import to Supabase: npm run migrate:import');
   console.log('   4. Start dev server: npm run dev');
 }

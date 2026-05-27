@@ -64,8 +64,7 @@ const checks = [
         const content = fs.readFileSync(filePath, 'utf8');
         const sensitivePatterns = [
           '68a6752b6e1d0e2196db1b53',
-          'NjhhNjc1MmI2ZTFkMGUyMTk2ZGIxYjUzOjY3ZWM0ZTRhMjMyN2Y3NGYzYTJmOTZmNQ==',
-          'service2.funifier.com'
+          'NjhhNjc1MmI2ZTFkMGUyMTk2ZGIxYjUzOjY3ZWM0ZTRhMjMyN2Y3NGYzYTJmOTZmNQ=='
         ];
         return !sensitivePatterns.some(pattern => content.includes(pattern));
       };

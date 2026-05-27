@@ -2,7 +2,7 @@
  * Challenge Notification System Integration Tests
  * 
  * Tests the complete notification flow from webhook to popup dismissal
- * and integration with existing Funifier service.
+ * and integration with existing API service.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
@@ -284,10 +284,10 @@ describe('Challenge Notification System Integration', () => {
     });
   });
 
-  describe('Integration with Existing Funifier Service', () => {
-    it('should work alongside existing Funifier API calls', async () => {
+  describe('Integration with Existing API Service', () => {
+    it('should work alongside existing API calls', async () => {
       // This test verifies that the notification system doesn't interfere
-      // with existing Funifier service functionality
+      // with existing service functionality
 
       render(<ChallengeNotificationDisplay showErrors={false} />);
 
@@ -295,14 +295,14 @@ describe('Challenge Notification System Integration', () => {
       expect(mockSystem.initialize).toHaveBeenCalled();
       expect(mockSSEClient.connect).toHaveBeenCalled();
 
-      // Simulate existing Funifier API usage (would be mocked in real scenario)
+      // Simulate existing API usage (would be mocked in real scenario)
       // This ensures the notification system is additive, not disruptive
-      const mockFunifierCall = vi.fn().mockResolvedValue({ success: true });
+      const mockApiCall = vi.fn().mockResolvedValue({ success: true });
       
       // Execute mock API call
-      await mockFunifierCall();
+      await mockApiCall();
       
-      expect(mockFunifierCall).toHaveBeenCalled();
+      expect(mockApiCall).toHaveBeenCalled();
 
       // Notification system should still be functional
       expect(mockSSEClient.isConnected()).toBe(true);

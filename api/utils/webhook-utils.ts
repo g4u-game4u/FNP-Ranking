@@ -15,7 +15,7 @@ export interface ChallengeCompletionEvent {
 }
 
 /**
- * Webhook payload structure from Funifier
+ * Webhook payload structure
  */
 export interface WebhookPayload {
   eventType: 'challenge_completed';
@@ -81,9 +81,9 @@ export function validateWebhookSignature(payload: string, signature?: string): b
     return true;
   }
 
-  const webhookSecret = process.env.FUNIFIER_WEBHOOK_SECRET;
+  const webhookSecret = process.env.WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.warn('FUNIFIER_WEBHOOK_SECRET not configured, skipping signature validation');
+    console.warn('WEBHOOK_SECRET not configured, skipping signature validation');
     return true;
   }
 

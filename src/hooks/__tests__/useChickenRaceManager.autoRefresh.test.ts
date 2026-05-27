@@ -1,24 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useChickenRaceManager } from '../useChickenRaceManager';
-import type { FunifierConfig } from '../../types';
+import type { SupabaseConfig } from '../../types';
 
 // Mock the API service
-vi.mock('../../services/funifierApi');
+vi.mock('../../services/supabaseApi');
 vi.mock('../useAppState');
 vi.mock('../../store/leaderboardStore');
 vi.mock('../../store/appStore');
 
 describe('useChickenRaceManager - Auto Refresh', () => {
-  let mockApiConfig: FunifierConfig;
+  let mockApiConfig: SupabaseConfig;
 
   beforeEach(() => {
     vi.useFakeTimers();
     
     mockApiConfig = {
-      serverUrl: 'https://test.api.com',
-      apiKey: 'test-key',
-      authToken: 'test-token',
+      url: 'https://test.supabase.co',
+      anonKey: 'test-anon-key',
     };
 
     // Mock document.visibilityState

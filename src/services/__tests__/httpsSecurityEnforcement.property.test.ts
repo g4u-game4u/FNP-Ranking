@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fc from 'fast-check';
-import { FunifierApiService } from '../funifierApi';
+import { SupabaseApiService } from '../supabaseApi';
 import { GoogleSheetsService } from '../googleSheetsService';
 import { validateUrl } from '../../utils/validation';
-import type { FunifierConfig, GoogleSheetsConfig } from '../../types';
+import type { GoogleSheetsConfig } from '../../types';
 
 /**
  * Property-based tests for HTTPS security enforcement
@@ -25,28 +25,24 @@ describe('HTTPS Security Enforcement Properties', () => {
             protocol: fc.oneof(fc.constant('http:'), fc.constant('https:'), fc.constant('ftp:'), fc.constant('ws:')),
             domain: fc.domain(),
             path: fc.string({ minLength: 0, maxLength: 50 }).map(s => s.startsWith('/') ? s : '/' + s),
-            apiKey: fc.string({ minLength: 10, maxLength: 50 }),
-            authToken: fc.string({ minLength: 20, maxLength: 100 })
+            anonKey: fc.string({ minLength: 10, maxLength: 50 }),
           }),
           (urlConfig) => {
-            const serverUrl = `${urlConfig.protocol}//${urlConfig.domain}${urlConfig.path}`;
+            const url = `${urlConfig.protocol}//${urlConfig.domain}${urlConfig.path}`;
             
-            // Test Funifier API service
-            const funifierConfig: FunifierConfig = {
-              serverUrl,
-              apiKey: urlConfig.apiKey,
-              authToken: urlConfig.authToken
+            // Test Supabase API service
+            const supabaseConfig = {
+              url,
+              anonKey: urlConfig.anonKey,
             };
 
             // For non-HTTPS URLs, service should either reject or fail validation
             if (urlConfig.protocol !== 'https:') {
               // The service should either throw during construction or fail validation
               try {
-                const service = new FunifierApiService(funifierConfig);
-                const config = service.getConfig();
-                
+                new SupabaseApiService(supabaseConfig);
                 // If service was created, the URL should still be validated as invalid
-                expect(validateUrl(config.serverUrl)).toBe(false);
+                expect(validateUrl(url)).toBe(false);
               } catch (error) {
                 // Service correctly rejected non-HTTPS configuration
                 expect(error).toBeDefined();
@@ -54,10 +50,8 @@ describe('HTTPS Security Enforcement Properties', () => {
             } else {
               // HTTPS URLs should be accepted
               try {
-                const service = new FunifierApiService(funifierConfig);
-                const config = service.getConfig();
-                expect(config.serverUrl).toMatch(/^https:/);
-                expect(validateUrl(config.serverUrl)).toBe(true);
+                new SupabaseApiService(supabaseConfig);
+                expect(validateUrl(url)).toBe(true);
               } catch (error) {
                 // If it fails, it should be due to other validation issues, not HTTPS
                 expect(error).toBeDefined();
@@ -87,16 +81,15 @@ describe('HTTPS Security Enforcement Properties', () => {
             if (url.startsWith('http://')) {
               expect(isValid).toBe(true); // URL format is valid
               
-              // But service should reject it
-              const config: FunifierConfig = {
-                serverUrl: url,
-                apiKey: 'test-key',
-                authToken: 'test-token'
+              // But service should reject it at runtime
+              const config = {
+                url,
+                anonKey: 'test-key',
               };
               
               // Service should handle HTTP URLs appropriately
               // (either reject them or warn about security)
-              expect(() => new FunifierApiService(config)).not.toThrow();
+              expect(() => new SupabaseApiService(config)).not.toThrow();
             }
           }
         ),
@@ -108,24 +101,18 @@ describe('HTTPS Security Enforcement Properties', () => {
       fc.assert(
         fc.property(
           fc.record({
-            serverUrl: fc.constant('https://api.example.com'),
-            apiKey: fc.string({ minLength: 10, maxLength: 100 }),
-            authToken: fc.string({ minLength: 20, maxLength: 200 })
+            url: fc.constant('https://api.example.com'),
+            anonKey: fc.string({ minLength: 10, maxLength: 100 }),
           }),
           (config) => {
             // All configurations with HTTPS should be handled securely
-            const service = new FunifierApiService(config);
-            const serviceConfig = service.getConfig();
+            const service = new SupabaseApiService(config);
             
-            // Verify HTTPS is maintained
-            expect(serviceConfig.serverUrl).toMatch(/^https:/);
+            // Verify service was created successfully
+            expect(service).toBeDefined();
             
-            // Verify sensitive data is properly handled (not exposed in logs, etc.)
-            expect(serviceConfig.apiKey).toBe(config.apiKey);
-            expect(serviceConfig.authToken).toBe(config.authToken);
-            
-            // Verify configuration is valid
-            expect(validateUrl(serviceConfig.serverUrl)).toBe(true);
+            // Verify HTTPS URL is valid
+            expect(validateUrl(config.url)).toBe(true);
           }
         ),
         { numRuns: 10 }

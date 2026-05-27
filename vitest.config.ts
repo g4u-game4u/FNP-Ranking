@@ -34,12 +34,7 @@ export default defineConfig({
           lines: 90,
           statements: 90,
         },
-        'src/services/funifierApi.ts': {
-          branches: 95,
-          functions: 95,
-          lines: 95,
-          statements: 95,
-        },
+
         'src/store/*.ts': {
           branches: 90,
           functions: 90,

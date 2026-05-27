@@ -28,8 +28,6 @@
     "deploy:production": "vercel --prod",
     "verify:deployment": "node scripts/verify-deployment.js",
     "postbuild": "echo 'Build completed successfully. Ready for deployment.'",
-    "migrate:export": "tsx scripts/export-funifier-data.ts",
-    "migrate:export:full": "tsx scripts/export-funifier-data.ts --with-player-details --with-player-statuses",
     "migrate:import": "tsx scripts/import-to-supabase.ts",
     "migrate:schema": "echo 'Please run the supabase-schema.sql file in your Supabase SQL editor'",
     "setup:supabase": "node scripts/setup-supabase-env.js"

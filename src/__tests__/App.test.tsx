@@ -3,7 +3,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
-import { FunifierApiService } from '../services/funifierApi';
+import { SupabaseApiService } from '../services/supabaseApi';
 import { 
   createMockApiService, 
   mockPlayersSet, 
@@ -12,7 +12,7 @@ import {
 } from '../test/utils/testUtils';
 
 // Mock the API service
-vi.mock('../services/funifierApi');
+vi.mock('../services/supabaseApi');
 
 describe('App Component', () => {
   let mockApiService: any;
@@ -29,7 +29,7 @@ describe('App Component', () => {
       }),
     });
     
-    (FunifierApiService as any).mockImplementation(() => mockApiService);
+    (SupabaseApiService as any).mockImplementation(() => mockApiService);
   });
 
   afterEach(() => {

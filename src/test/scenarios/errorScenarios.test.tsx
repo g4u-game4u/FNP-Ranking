@@ -3,7 +3,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import App from '../../App';
-import { FunifierApiService } from '../../services/funifierApi';
+import { SupabaseApiService } from '../../services/supabaseApi';
 import { 
   createMockApiService, 
   createNetworkError, 
@@ -13,7 +13,7 @@ import {
 } from '../utils/testUtils';
 
 // Mock the API service
-vi.mock('../../services/funifierApi');
+vi.mock('../../services/supabaseApi');
 
 describe('Error Scenarios and Edge Cases', () => {
   let mockApiService: any;
@@ -23,7 +23,7 @@ describe('Error Scenarios and Edge Cases', () => {
     mockEnvironmentVariables();
     
     mockApiService = createMockApiService();
-    (FunifierApiService as any).mockImplementation(() => mockApiService);
+    (SupabaseApiService as any).mockImplementation(() => mockApiService);
   });
 
   afterEach(() => {
@@ -269,7 +269,7 @@ describe('Error Scenarios and Edge Cases', () => {
 
     it('should handle invalid API configuration', async () => {
       mockEnvironmentVariables({
-        VITE_FUNIFIER_SERVER_URL: 'invalid-url',
+        VITE_SUPABASE_URL: 'invalid-url',
       });
       
       render(<App />);

@@ -310,7 +310,7 @@ export const useRealTimeUpdates = (
  * This is a higher-level hook that integrates with the UI loading states
  */
 export const useRealTimeUpdatesWithLoading = (
-  apiService: FunifierApiService,
+  apiService: SupabaseApiService,
   config: RealTimeConfig = {}
 ) => {
   const { setLoadingState } = useLeaderboardData();

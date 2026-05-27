@@ -24,7 +24,7 @@ async function testWebhookEndpoint() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-funifier-signature': 'test-signature'
+        'x-webhook-signature': 'test-signature'
       },
       body: JSON.stringify(testPayload)
     });

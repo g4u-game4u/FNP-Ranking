@@ -173,7 +173,7 @@ describe('Challenge Webhook Property Tests', () => {
         }),
         (testCase) => {
           // Set up environment
-          process.env.FUNIFIER_WEBHOOK_SECRET = testCase.secret;
+          process.env.WEBHOOK_SECRET = testCase.secret;
           
           // Test signature validation
           const result = validateWebhookSignature(testCase.payload, testCase.signature);
@@ -188,7 +188,7 @@ describe('Challenge Webhook Property Tests', () => {
           
           // Property: When secret is not configured, should allow with warning
           if (!testCase.secret) {
-            delete process.env.FUNIFIER_WEBHOOK_SECRET;
+            delete process.env.WEBHOOK_SECRET;
             const resultNoSecret = validateWebhookSignature(testCase.payload, testCase.signature);
             expect(resultNoSecret).toBe(true);
           }

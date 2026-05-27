@@ -1,13 +1,6 @@
 // Types barrel export file
 // Export all types from this file for easier imports
 
-// Funifier API Configuration
-export interface FunifierConfig {
-  serverUrl: string; // e.g., https://your-funifier-server.com
-  apiKey: string; // Your Funifier API key from environment variables
-  authToken: string; // Basic auth token from environment variables
-}
-
 // Supabase API Configuration
 export interface SupabaseConfig {
   url: string; // Supabase project URL

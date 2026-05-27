@@ -1,14 +1,21 @@
-import type { FunifierConfig } from '../types';
+/**
+ * API Configuration interface
+ */
+export interface ApiConfig {
+  serverUrl: string;
+  apiKey: string;
+  authToken: string;
+}
 
 /**
- * API Configuration management for Funifier integration
+ * API Configuration management
  * Uses environment variables for secure configuration
  */
 export class ApiConfigManager {
   private static instance: ApiConfigManager;
-  private config: FunifierConfig | null = null;
+  protected config: ApiConfig | null = null;
 
-  private constructor() {}
+  protected constructor() {}
 
   public static getInstance(): ApiConfigManager {
     if (!ApiConfigManager.instance) {
@@ -22,10 +29,10 @@ export class ApiConfigManager {
    * Returns null if configuration is missing (for demo mode fallback)
    * Enforces HTTPS for all API communications
    */
-  public initializeConfig(): FunifierConfig | null {
-    const serverUrl = import.meta.env.VITE_FUNIFIER_SERVER_URL;
-    const apiKey = import.meta.env.VITE_FUNIFIER_API_KEY;
-    const authToken = import.meta.env.VITE_FUNIFIER_AUTH_TOKEN;
+  public initializeConfig(): ApiConfig | null {
+    const serverUrl = import.meta.env.VITE_SUPABASE_URL;
+    const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const authToken = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
     // Security: Do not log sensitive credentials
     // Only log configuration status, not actual values
@@ -33,7 +40,7 @@ export class ApiConfigManager {
     // Return null instead of throwing error to allow demo mode fallback
     if (!serverUrl || !apiKey || !authToken) {
       console.warn(
-        'Missing Funifier configuration. Falling back to demo mode.'
+        'Missing API configuration. Falling back to demo mode.'
       );
       return null;
     }
@@ -58,7 +65,7 @@ export class ApiConfigManager {
    * Get current configuration
    * Returns null if configuration is not available (for demo mode fallback)
    */
-  public getConfig(): FunifierConfig | null {
+  public getConfig(): ApiConfig | null {
     if (!this.config) {
       return this.initializeConfig();
     }
@@ -80,7 +87,7 @@ export class ApiConfigManager {
   /**
    * Update configuration (useful for testing)
    */
-  public updateConfig(newConfig: Partial<FunifierConfig>): void {
+  public updateConfig(newConfig: Partial<ApiConfig>): void {
     if (this.config) {
       this.config = { ...this.config, ...newConfig };
     }
