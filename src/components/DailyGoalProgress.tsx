@@ -13,7 +13,7 @@ interface DailyGoalProgressProps {
 
 export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
   apiService,
-  playerId = 'dummy@grupo4u.com.br',
+  playerId,
   challengeId = 'E81QYFG',
   current: fallbackCurrent = 39000,
   target: fallbackTarget = 50000,
@@ -26,12 +26,12 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
     target: number;
   } | null>(null);
 
-  // Use dynamic data if API service is available, otherwise fall back to props
+  // Use dynamic data if API service is available AND we have a valid playerId, otherwise fall back to props
   const challengeData = useChallengeProgress({
     apiService: apiService || null,
-    playerId,
+    playerId: playerId || '',
     challengeId,
-    enabled: !!apiService,
+    enabled: !!apiService && !!playerId,
   });
 
   // Fetch all players' progress to find the one with highest percentage
@@ -47,6 +47,7 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
         // Get the first leaderboard's players
         const firstLeaderboard = leaderboards[0];
         const players = await apiService.getLeaderboardPlayers(firstLeaderboard.id);
+        if (!players || players.length === 0) return;
 
         // Fetch challenge progress for each player and find the highest
         let maxProgress = 0;
@@ -85,8 +86,8 @@ export const DailyGoalProgress: React.FC<DailyGoalProgressProps> = ({
 
     if (apiService) {
       fetchTopPlayerProgress();
-      // Refresh every 30 seconds
-      const interval = setInterval(fetchTopPlayerProgress, 30000);
+      // Refresh every 60 seconds (reduced frequency to avoid hammering the API)
+      const interval = setInterval(fetchTopPlayerProgress, 60000);
       return () => clearInterval(interval);
     }
   }, [apiService, challengeId]);

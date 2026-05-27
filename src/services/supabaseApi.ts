@@ -40,6 +40,7 @@ export class SupabaseApiService {
 
   /**
    * Retry logic with exponential backoff
+   * Does NOT retry on 4xx client errors (bad input, not found, etc.)
    */
   private async retryRequest<T>(
     requestFn: () => Promise<T>,
@@ -48,6 +49,11 @@ export class SupabaseApiService {
     try {
       return await requestFn();
     } catch (error) {
+      // Don't retry on client errors (4xx) - they won't succeed on retry
+      if (error instanceof Error && /4\d{2}|invalid input|not found|bad request/i.test(error.message)) {
+        throw error;
+      }
+
       if (attempt >= this.retryAttempts) {
         throw error;
       }
