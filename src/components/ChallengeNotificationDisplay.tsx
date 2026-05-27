@@ -36,20 +36,26 @@ export const ChallengeNotificationDisplay: React.FC<ChallengeNotificationDisplay
 
   // Start polling on mount
   useEffect(() => {
-    console.log('Starting challenge event poller...');
-    challengeEventPoller.start(2000);
-    setIsPolling(true);
-
-    const unsubscribe = challengeEventPoller.onEvent((event) => {
-      console.log('Received challenge event:', event);
-      setNotificationQueue(prev => [...prev, event]);
-    });
-
-    return () => {
-      unsubscribe();
-      challengeEventPoller.stop();
-      setIsPolling(false);
-    };
+    // TODO: Re-enable challenge event polling after migrating from Redis to Supabase
+    // Redis is not configured in production, causing 500 errors
+    console.log('Challenge event polling disabled - awaiting Supabase migration');
+    setIsPolling(false);
+    
+    // Uncomment when Supabase-based polling is implemented:
+    // console.log('Starting challenge event poller...');
+    // challengeEventPoller.start(2000);
+    // setIsPolling(true);
+    //
+    // const unsubscribe = challengeEventPoller.onEvent((event) => {
+    //   console.log('Received challenge event:', event);
+    //   setNotificationQueue(prev => [...prev, event]);
+    // });
+    //
+    // return () => {
+    //   unsubscribe();
+    //   challengeEventPoller.stop();
+    //   setIsPolling(false);
+    // };
   }, []);
 
   // Process notification queue
