@@ -77,6 +77,8 @@ const MOCK_LEADERBOARD_DATA = [
 interface ChickenRaceManagerConfig {
   /** Supabase API configuration */
   apiConfig?: SupabaseConfig;
+  /** Pre-fetched players to skip API initialization entirely */
+  initialPlayers?: import('../types').Player[];
   /** Real-time update configuration */
   realTimeConfig?: {
     pollingInterval?: number;
@@ -109,6 +111,7 @@ interface ChickenRaceManagerConfig {
 export const useChickenRaceManager = (config: ChickenRaceManagerConfig = {}) => {
   const {
     apiConfig,
+    initialPlayers,
     realTimeConfig = {},
     transitionConfig = {},
     autoRefreshConfig = { enabled: true, interval: 60000 },
@@ -563,8 +566,43 @@ export const useChickenRaceManager = (config: ChickenRaceManagerConfig = {}) => 
     positionTransitions.isAnimating,
   ]);
 
+  // If initialPlayers are provided, use them directly and skip API initialization
+  useEffect(() => {
+    if (initialPlayers && initialPlayers.length > 0) {
+      console.log('🐔 Using pre-fetched initialPlayers, skipping API initialization');
+      setInitializationAttempted(true);
+      isInitializingRef.current = false;
+      setUsingMockData(false);
+
+      const leaderboardStore = useLeaderboardStore.getState();
+      // Set a synthetic leaderboard so the UI considers itself initialized
+      if (!leaderboardStore.currentLeaderboard) {
+        const syntheticLeaderboard = {
+          _id: 'SNAPSHOT',
+          title: 'Ranking FNP',
+          description: 'Dados do snapshot diário',
+          principalType: 0,
+          operation: { type: 0, achievement_type: 0, item: 'total', sort: 1 },
+          period: { type: 0, timeAmount: 0, timeScale: 0 },
+        };
+        leaderboardStore.setLeaderboards([syntheticLeaderboard]);
+        leaderboardStore.setCurrentLeaderboard(syntheticLeaderboard);
+        leaderboardStore.setCurrentLeaderboardId(syntheticLeaderboard._id);
+      }
+
+      updatePlayers(initialPlayers);
+      setLoadingState('leaderboards', false);
+      setLoadingState('currentLeaderboard', false);
+    }
+  }, [initialPlayers, updatePlayers, setLoadingState]);
+
   // Auto-initialize on mount if API config is provided - StrictMode compatible
   useEffect(() => {
+    // Skip API initialization if initialPlayers are provided
+    if (initialPlayers && initialPlayers.length > 0) {
+      return;
+    }
+
     console.log('🐔 useEffect triggered:', {
       hasApiConfig: !!apiConfig,
       hasApiService: !!apiService,
@@ -599,6 +637,11 @@ export const useChickenRaceManager = (config: ChickenRaceManagerConfig = {}) => 
 
   // Auto-refresh effect - refreshes data every minute
   useEffect(() => {
+    // Skip auto-refresh if initialPlayers are provided (snapshot hook handles polling)
+    if (initialPlayers && initialPlayers.length > 0) {
+      return;
+    }
+
     const autoRefreshEnabled = autoRefreshConfig?.enabled !== false; // Default to true
     const refreshInterval = autoRefreshConfig?.interval || 60000; // Default 60 seconds
 
